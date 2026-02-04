@@ -1,4 +1,4 @@
-  const { useState, useEffect, useMemo, useCallback, useRef } = React;
+   const { useState, useEffect, useMemo, useCallback, useRef } = React;
       const { createRoot } = ReactDOM;
       
       const kebabToPascal = (str) => 
@@ -32,6 +32,22 @@
         <img src="https://i.imgur.com/85pC8ek.png" alt="Manual do Professor" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />
       );
 
+      const CustomHomeIcon = ({ size = 24, className = "" }) => (
+        <img src="https://i.imgur.com/3zN40MT.png" alt="Início" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />
+      );
+
+      const CustomReportIcon = ({ size = 24, className = "" }) => (
+        <img src="https://i.imgur.com/bYLcRqs.png" alt="Formulário" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />
+      );
+
+      const CustomHistoryIcon = ({ size = 24, className = "" }) => (
+        <img src="https://i.imgur.com/crHNfQF.png" alt="Histórico" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />
+      );
+      
+      const CustomCorrectionIcon = ({ size = 24, className = "" }) => (
+        <img src="https://i.imgur.com/SgjBp7C.png" alt="Correção" style={{ width: size, height: size, objectFit: 'contain' }} className={className} />
+      );
+
       // Icon definitions
       const Menu = (p) => <Icon name="menu" {...p} />;
       const Moon = (p) => <Icon name="moon" {...p} />;
@@ -48,7 +64,6 @@
       const Loader2 = (p) => <Icon name="loader-2" {...p} />;
       const Info = (p) => <Icon name="info" {...p} />;
       const AlertTriangle = (p) => <Icon name="alert-triangle" {...p} />;
-      const LayoutDashboard = (p) => <Icon name="layout-dashboard" {...p} />;
       const CheckCircle2 = (p) => <Icon name="check-circle-2" {...p} />;
       const XCircle = (p) => <Icon name="x-circle" {...p} />;
       const Search = (p) => <Icon name="search" {...p} />;
@@ -67,16 +82,14 @@
       const FileText = (p) => <Icon name="file-text" {...p} />;
       const SendHorizontal = (p) => <Icon name="send-horizontal" {...p} />;
       const Code = (p) => <Icon name="code" {...p} />;
-      const PenTool = (p) => <Icon name="pen-tool" {...p} />;
-      const Scale = (p) => <Icon name="scale" {...p} />;
       const Book = (p) => <Icon name="book" {...p} />;
-      const Clock3 = (p) => <Icon name="clock-3" {...p} />;
       const ArrowLeft = (p) => <Icon name="arrow-left" {...p} />;
       const FileSignature = (p) => <Icon name="file-signature" {...p} />;
       const ArrowRight = (p) => <Icon name="arrow-right" {...p} />;
-      const Bookmark = (p) => <Icon name="bookmark" {...p} />;
-      const Dice5 = (p) => <Icon name="dice-5" {...p} />;
-      const Link = (p) => <Icon name="link" {...p} />;
+      const LayoutDashboard = (p) => <Icon name="layout-dashboard" {...p} />;
+      const Plus = (p) => <Icon name="plus" {...p} />;
+      const Minus = (p) => <Icon name="minus" {...p} />;
+      const Type = (p) => <Icon name="type" {...p} />;
 
       // --- CONSTANTS ---
       const WORKER_URL = "https://api-professor-dashboard.brendonhbrcc.workers.dev/";
@@ -99,6 +112,11 @@
         { id: 'mil_sci', name: 'Ciências Militares', maxScore: 5 },
         { id: 'mil_career', name: 'Carreira Militar', maxScore: 5 },
         { id: 'practice', name: 'Práticas Militares e Legislação', maxScore: 4 },
+      ];
+
+      const EVALUATION_MODALITIES = [
+        { id: 'eval_basic', name: 'Avaliação Básica', maxScore: 10 },
+        { id: 'eval_adv', name: 'Avaliação Avançada', maxScore: 10 }
       ];
 
       // --- SERVICES ---
@@ -157,7 +175,6 @@
       const fetchClassContent = async (gid) => {
         try {
           const rows = await fetchCSV(gid);
-          // row[0] = TAG, row[1] = Content (B), row[2] = Extra (C)
           return rows.map(row => ({ 
               tag: row[0]?.toLowerCase().trim() || '', 
               content: row[1] || '', 
@@ -235,6 +252,69 @@
         }
       };
 
+      const postToForumTopic = async (topicId, message) => {
+        try {
+            // 1. Acessa a página de "Responder" para pegar tokens de segurança (auth, lt, rs)
+            const outputUrl = `/post?t=${topicId}&mode=reply`;
+            const loadResp = await fetch(outputUrl, {
+                credentials: 'same-origin',
+                headers: { 'Cache-Control': 'no-store, no-cache' }
+            });
+
+            if (!loadResp.ok) throw new Error(`Erro ao carregar formulário (Status: ${loadResp.status})`);
+
+            const html = await loadResp.text();
+            const dom = new DOMParser().parseFromString(html, 'text/html');
+            
+            // Busca o formulário de postagem (geralmente action="/post")
+            const form = dom.querySelector('form[action="/post"]');
+            if (!form) throw new Error("Formulário de postagem não encontrado no DOM.");
+
+            // 2. Prepara os dados (copia inputs ocultos essenciais)
+            const formData = new FormData();
+            form.querySelectorAll('input, textarea, select').forEach(el => {
+                const name = el.getAttribute('name');
+                if (!name) return;
+                // Ignora a mensagem vazia do form original e botões de preview
+                if (name === 'message' || name === 'preview') return;
+                if ((el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+                
+                formData.append(name, el.value || '');
+            });
+
+            // 3. Adiciona os dados obrigatórios
+            formData.set('message', message);
+            formData.set('t', topicId);
+            formData.set('mode', 'reply');
+            if (!formData.has('post')) formData.set('post', '1'); // Simula o clique em "Enviar"
+
+            // 4. Envia a postagem
+            const sendResp = await fetch('/post', {
+                method: 'POST',
+                body: formData,
+                credentials: 'same-origin'
+            });
+
+            if (!sendResp.ok) throw new Error(`Erro na requisição POST (Status: ${sendResp.status})`);
+
+            // 5. Verifica se houve erro de Flood ou outro erro no HTML de retorno
+            const respText = (await sendResp.text()).toLowerCase();
+            
+            if (respText.includes('flood')) {
+                throw new Error('Flood detectado - aguarde antes de tentar novamente.');
+            }
+            if (respText.includes('não existe') || respText.includes('tópico trancado')) {
+                throw new Error('Tópico inexistente ou trancado.');
+            }
+
+            return true;
+
+        } catch (error) {
+            // Repassa o erro para que o seu loop (que tem catch) possa tratar o Flood
+            throw error;
+        }
+      };
+
       // --- LOGIC HELPERS ---
       const generateId = () => Math.random().toString(36).substr(2, 9);
       const parseRowsToBlocks = (rows) => {
@@ -262,7 +342,6 @@
         return parseLevel();
       };
       const getRoleLevel = (role) => {
-        // Simplified role check since we only care about basic access now
         return 1;
       };
       const parseDateHelper = (dateStr) => {
@@ -273,6 +352,12 @@
           const [hour, minute, second] = timePart ? timePart.split(':') : ['00', '00', '00'];
           return new Date(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute), Number(second || 0));
         } catch (e) { return null; }
+      };
+      
+      const stripTags = (str) => {
+        if (!str) return '';
+        let text = str.replace(/<br\s*\/?>/gi, ' ');
+        return text.replace(/<[^>]+>/g, '');
       };
 
       // --- RICH TEXT RENDERER ---
@@ -309,7 +394,7 @@
         );
       };
 
-      // --- COMPONENTS ---
+      // --- COMPONENTS --- (BrandHeader, Slideshow, NoticeBoard, Navbar unchanged)
       const BrandHeader = () => (
         <div className="flex items-center gap-4 select-none">
             <div className="relative"><img src={LOGO_URL} alt="CFO" className="h-12 w-auto drop-shadow-lg" /></div>
@@ -336,7 +421,6 @@
             const fetchSlides = async () => {
                 try {
                     const rows = await fetchCSV(SLIDESHOW_GID);
-                    // Assume all non-empty rows in Col A are images.
                     const images = rows.map(r => r[0]).filter(url => url && url.startsWith('http'));
                     setSlidesData(images);
                 } catch (e) {
@@ -392,7 +476,6 @@
               const load = async () => {
                   try {
                       const rows = await fetchCSV(NOTICES_GID);
-                      // A2 is row index 1, col 0. B2 is row index 1, col 1.
                       if (rows.length >= 2) {
                           setData({ title: rows[1][0] || 'Aviso', message: rows[1][1] || '' });
                       } else {
@@ -440,11 +523,31 @@
               <button onClick={onMenuClick} className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-hover rounded transition-colors"><Menu size={28} /></button>
               <BrandHeader />
               {user && (
-                  <nav className="hidden lg:flex items-center gap-2 ml-6" ref={dropdownRef}>
-                    <button onClick={() => navigateTo('home')} className={`px-4 py-2 rounded-sm text-sm font-condensed uppercase font-bold tracking-wide transition-all ${currentView === 'home' ? 'bg-brand text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-hover'}`}>Início</button>
+                  <nav className="hidden lg:flex items-center gap-2 ml-8" ref={dropdownRef}>
+                    <button 
+                        onClick={() => navigateTo('home')} 
+                        className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 ease-out ${currentView === 'home' ? 'bg-brand text-white shadow-md pl-4 pr-5' : 'text-slate-400 hover:text-brand hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                    >
+                        <CustomHomeIcon size={20} className={`shrink-0 transition-transform duration-300 ${currentView !== 'home' && 'group-hover:scale-110'}`} />
+                        <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out ${currentView === 'home' ? 'max-w-[100px] opacity-100' : 'max-w-0 opacity-0 group-hover:max-w-[100px] group-hover:opacity-100'}`}>
+                            <span className="text-xs font-bold uppercase tracking-widest font-condensed pl-1">Início</span>
+                        </span>
+                    </button>
+
+                    <div className="h-6 w-px bg-slate-200 dark:bg-white/10 mx-2"></div>
+
                     {menuItems.map(item => (
-                        <button key={item.id} onClick={() => navigateTo(item.id)} className={`flex items-center gap-1.5 px-4 py-2 rounded-sm text-sm font-condensed uppercase font-bold tracking-wide transition-all ${currentView === item.id ? 'text-brand bg-brand/10' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-hover'}`}>
-                            {item.label}
+                        <button 
+                            key={item.id} 
+                            onClick={() => navigateTo(item.id)} 
+                            className={`group flex items-center gap-2 px-3 py-2 rounded-full transition-all duration-300 ease-out ${currentView === item.id ? 'bg-brand/10 text-brand ring-1 ring-brand/20 pl-4 pr-5' : 'text-slate-400 hover:text-brand hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                        >
+                            <div className={`shrink-0 transition-transform duration-300 ${currentView !== item.id && 'group-hover:scale-110'}`}>
+                                {React.createElement(item.icon, { size: 20 })}
+                            </div>
+                            <span className={`overflow-hidden whitespace-nowrap transition-all duration-300 ease-out ${currentView === item.id ? 'max-w-[200px] opacity-100' : 'max-w-0 opacity-0 group-hover:max-w-[200px] group-hover:opacity-100'}`}>
+                                <span className="text-xs font-bold uppercase tracking-widest font-condensed pl-1">{item.label}</span>
+                            </span>
                         </button>
                     ))}
                   </nav>
@@ -470,14 +573,15 @@
         );
       };
 
-      const CopyableText = ({ block, status, onInteract, attachedAnswer }) => {
+      const CopyableText = ({ block, status, onInteract, attachedAnswer, processedContent, textSizeClass }) => {
         const [copied, setCopied] = useState(false);
         const isTitle = block.tag === 'title';
         const isQuestion = block.tag === 'p';
         
         const handleInteraction = (e) => { 
             e.stopPropagation(); 
-            navigator.clipboard.writeText(block.content || ''); 
+            const textToCopy = stripTags(processedContent || '');
+            navigator.clipboard.writeText(textToCopy); 
             setCopied(true); 
             setTimeout(() => setCopied(false), 2000); 
             onInteract(block.id); 
@@ -485,87 +589,68 @@
 
         if (isTitle) {
           return (
-            <div onClick={handleInteraction} className={`flex items-end justify-between py-3 mt-8 mb-4 gap-4 border-b-2 border-brand/20 select-none group cursor-pointer hover:bg-brand/5 rounded-sm px-2 transition-all duration-200`}>
-              <div className="flex items-center gap-3 w-full">
-                  <div className="h-8 w-1.5 bg-brand rounded-full"></div>
-                  <h3 className={`font-condensed font-bold text-3xl uppercase tracking-tighter leading-none ${status.isSkipped ? 'text-red-600' : 'text-slate-900 dark:text-white group-hover:text-brand'}`}><RichText text={block.content} /></h3>
+            <div onClick={handleInteraction} className={`flex items-end justify-between py-4 mt-10 mb-6 gap-4 border-b border-brand/10 select-none group cursor-pointer hover:bg-brand/5 rounded-sm px-4 transition-all duration-200`}>
+              <div className="flex items-center gap-4 w-full">
+                  <div className="h-6 w-1.5 bg-brand rounded-full"></div>
+                  <h3 className={`font-poppins font-semibold text-2xl uppercase tracking-tight leading-none ${status.isSkipped ? 'text-red-600' : 'text-slate-800 dark:text-white group-hover:text-brand'}`}><RichText text={processedContent} /></h3>
               </div>
-              <div className={`transition-opacity duration-200 ${copied ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}>{copied ? <CheckCircle size={24} className="text-green-600" /> : <Copy size={20} className="text-brand/50" />}</div>
+              <div className={`text-slate-300 group-hover:text-brand transition-colors`}>{copied ? <CheckCircle size={24} className="text-green-600" /> : <Copy size={20} />}</div>
             </div>
           );
         }
         
         if (isQuestion) {
           return (
-            <div className="mb-6 group">
-                {/* Question Card */}
+            <div className="mb-3 group">
                 <div 
                     onClick={handleInteraction} 
                     className={`
-                        relative flex flex-col bg-white dark:bg-[#1a211d] 
-                        border-l-[6px] shadow-sm rounded-r-sm cursor-pointer transition-all duration-300
+                        flex gap-4 items-start px-4 py-3 rounded-md cursor-pointer transition-all duration-200 border border-transparent
                         ${status.isSkipped 
-                            ? 'border-l-red-500 border-y border-r border-red-200 dark:border-red-900/30' 
+                            ? 'bg-red-50 dark:bg-red-900/10 border-red-100 dark:border-red-900/20' 
                             : status.isClicked 
-                                ? 'border-l-brand/60 border-y border-r border-brand/10 opacity-70' 
-                                : 'border-l-slate-700 dark:border-l-slate-500 border-y border-r border-slate-200 dark:border-white/5 hover:border-l-brand hover:shadow-md hover:-translate-y-0.5'
+                                ? 'opacity-60' 
+                                : 'bg-slate-50/50 dark:bg-white/5 hover:bg-white dark:hover:bg-dark-element hover:shadow-sm hover:border-slate-100 dark:hover:border-white/10'
                         }
                     `}
                 >
-                    <div className="p-5 flex gap-4 items-start">
-                        {/* Status Icon */}
-                        <div className="shrink-0 mt-1">
-                             {status.isClicked 
-                                ? <CheckCircle2 size={20} className="text-brand" /> 
-                                : status.isSkipped 
-                                    ? <AlertCircle size={20} className="text-red-500" />
-                                    : <div className="w-5 h-5 rounded-full border-2 border-slate-300 dark:border-slate-600 group-hover:border-brand transition-colors"></div>
-                             }
-                        </div>
-
-                        {/* Content */}
-                        <div className="flex-1 min-w-0">
-                            <span className={`text-[10px] font-bold uppercase tracking-widest font-condensed mb-1 block ${status.isClicked ? 'text-brand' : 'text-slate-400 group-hover:text-brand transition-colors'}`}>
-                                {status.isClicked ? 'Executado' : 'Script / Pergunta'}
-                            </span>
-                            <p className={`text-sm md:text-base font-medium leading-relaxed font-sans ${status.isClicked ? 'text-slate-500 line-through decoration-slate-400/50' : 'text-slate-800 dark:text-slate-100'}`}>
-                                <RichText text={block.content} />
-                            </p>
-                        </div>
-
-                        {/* Copy Action */}
-                        <div className="shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button className={`p-2 rounded-sm transition-all ${copied ? 'text-green-600 bg-green-50' : 'text-slate-400 hover:text-brand hover:bg-slate-100 dark:hover:bg-white/5'}`}>
-                                {copied ? <Check size={18} /> : <Copy size={18} />}
-                            </button>
-                        </div>
+                    <div className="shrink-0 mt-1">
+                         {status.isClicked 
+                            ? <CheckCircle2 size={18} className="text-brand opacity-70" /> 
+                            : status.isSkipped 
+                                ? <AlertCircle size={18} className="text-red-500 opacity-70" />
+                                : <div className={`w-4 h-4 rounded-full border-2 ${status.isClicked ? 'border-brand' : 'border-slate-300 dark:border-slate-600 group-hover:border-brand'} transition-colors`}></div>
+                         }
+                    </div>
+                    <div className="flex-1 min-w-0 pt-0.5">
+                        <p className={`${textSizeClass} font-poppins font-medium leading-relaxed text-slate-800 dark:text-slate-100 ${status.isClicked ? 'line-through decoration-slate-400/50 text-slate-500' : ''}`}>
+                            <RichText text={processedContent} />
+                        </p>
+                        {attachedAnswer && (
+                            <div className={`mt-2 ${status.isSkipped ? 'opacity-50' : ''} border-l-2 border-brand/20 pl-3 ml-1`}>
+                                 <p className="text-sm font-poppins text-slate-600 dark:text-slate-400 leading-relaxed italic">
+                                    <RichText text={attachedAnswer.content} />
+                                </p>
+                            </div>
+                        )}
+                    </div>
+                    <div className="shrink-0 self-start mt-0.5">
+                        <button className={`p-2 rounded hover:bg-brand/10 transition-colors ${copied ? 'text-green-600' : 'text-slate-300 hover:text-brand'}`}>
+                            {copied ? <Check size={16} /> : <Copy size={16} />}
+                        </button>
                     </div>
                 </div>
-
-                {/* Attached Answer (Rep) */}
-                {attachedAnswer && (
-                    <div className="ml-5 border-l-2 border-dashed border-slate-300 dark:border-white/10 pl-6 pt-3 pb-1">
-                        <div className={`p-4 rounded-sm bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 ${status.isSkipped ? 'opacity-50' : ''}`}>
-                            <div className="flex flex-col gap-1">
-                                <span className="text-[9px] font-bold text-brand uppercase tracking-widest font-condensed flex items-center gap-2">
-                                    <span className="w-1 h-4 bg-brand rounded-full"></span>
-                                    Resposta Esperada
-                                </span>
-                                <span className="text-sm text-slate-600 dark:text-slate-400 font-medium leading-relaxed italic pl-3">
-                                    <RichText text={attachedAnswer.content} />
-                                </span>
-                            </div>
-                        </div>
-                    </div>
-                )}
             </div>
           );
         }
 
         return (
-          <div className={`relative flex items-center justify-between py-2 mb-0.5 gap-4 group px-4 rounded-sm transition-all duration-200 cursor-pointer ${status.isClicked ? 'bg-brand/5 border-l-2 border-brand text-brand opacity-60' : status.isSkipped ? 'bg-red-50 border-l-2 border-red-400' : 'hover:bg-white dark:hover:bg-white/5 border-l-2 border-transparent hover:border-slate-300'}`} onClick={handleInteraction}>
-            <div className="w-full"><div className={`font-sans text-sm leading-relaxed whitespace-pre-wrap break-words font-medium ${status.isClicked ? 'line-through decoration-brand/50' : 'text-slate-700 dark:text-slate-300'}`}><RichText text={block.content} /></div></div>
-            <div className={`absolute right-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity ${copied ? 'opacity-100' : ''}`}>{copied ? <span className="bg-brand text-white text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm tracking-wider shadow-sm">Copiado</span> : <Copy size={12} className="text-slate-400" />}</div>
+          <div className={`relative flex items-center justify-between py-2 mb-1 gap-4 group px-4 rounded-sm transition-all duration-200 cursor-pointer ${status.isClicked ? 'opacity-50' : status.isSkipped ? 'bg-red-50/50' : 'hover:bg-slate-50 dark:hover:bg-white/5'}`} onClick={handleInteraction}>
+            <div className="w-full flex items-start gap-3">
+                <div className={`shrink-0 mt-2 w-1.5 h-1.5 rounded-full ${status.isClicked ? 'bg-brand/30' : 'bg-slate-300 dark:bg-slate-600 group-hover:bg-brand'}`}></div>
+                <div className={`font-poppins ${textSizeClass} leading-relaxed whitespace-pre-wrap break-words font-normal ${status.isClicked ? 'line-through decoration-slate-300 text-slate-500' : 'text-slate-700 dark:text-slate-300'}`}><RichText text={processedContent} /></div>
+            </div>
+            <div className={`shrink-0 ${copied ? 'text-green-600' : 'text-slate-300 hover:text-brand'}`}>{copied ? <Check size={16} /> : <Copy size={16} />}</div>
           </div>
         );
       };
@@ -580,9 +665,7 @@
             if (!nickname.trim()) return; 
             setSendState('sending'); 
             
-            // Subject from Column B (block.content)
             const subject = block.content || "Mensagem do Instrutor";
-            // Message Body from Column C (block.extra)
             const rawMessage = block.extra || "";
 
             const success = await sendPrivateMessage(nickname, subject, rawMessage);
@@ -617,7 +700,7 @@
                     <button onClick={() => setIsOpen(true)} className="w-full flex items-center justify-between p-4 bg-brand/5 hover:bg-brand/10 border border-brand/20 hover:border-brand/40 rounded-sm transition-all group">
                         <div className="flex items-center gap-3">
                             <div className="w-8 h-8 rounded-full bg-brand/10 flex items-center justify-center text-brand border border-brand/20 overflow-hidden"><img src="https://i.imgur.com/olTorAq.png" alt="" className="w-5 h-5 object-contain opacity-80" /></div>
-                            <div className="text-left"><span className="block text-xs font-bold uppercase tracking-widest text-brand font-condensed">Mensagem Privada</span><span className="text-[10px] text-slate-500 font-mono italic truncate max-w-[200px] block"><RichText text={block.content} /></span></div>
+                            <div className="text-left"><span className="block text-xs font-bold uppercase tracking-widest text-brand font-condensed">Mensagem Privada</span><span className="text-[10px] text-slate-500 font-mono italic truncate max-w-[200px] block font-poppins"><RichText text={block.content} /></span></div>
                         </div>
                         <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 group-hover:text-brand flex items-center gap-1 transition-colors">Abrir <ChevronRight size={14} /></span>
                     </button>
@@ -643,11 +726,35 @@
       };
 
       const Spoiler = ({ block, childrenNodes }) => {
-        const [isOpen, setIsOpen] = useState(false); const isOuter = block.level === 1; const title = block.content && block.content.trim() !== '' ? block.content : (isOuter ? 'Conteúdo Classificado' : 'Informação Adicional');
-        return (<div className={`my-4 border-l-2 ${isOuter ? 'border-brand pl-4' : 'border-slate-300 dark:border-slate-600 pl-4 ml-2'}`}><button onClick={() => setIsOpen(!isOpen)} className={`flex items-center gap-3 text-left transition-colors group ${isOpen ? 'text-brand' : 'text-slate-600 dark:text-slate-400 hover:text-brand'}`}><div className={`p-1 border rounded-sm transition-all ${isOpen ? 'border-brand bg-brand text-white' : 'border-slate-400 text-slate-400 group-hover:border-brand group-hover:text-brand'}`}>{isOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}</div><span className={`font-condensed font-bold uppercase tracking-wide ${isOuter ? 'text-sm' : 'text-xs'}`}><RichText text={title} /></span></button>{isOpen && <div className={`pt-4 animate-fade-in`}>{childrenNodes}</div>}</div>);
+        const [isOpen, setIsOpen] = useState(false);
+        const isOuter = block.level === 1;
+        const title = block.content && block.content.trim() !== '' ? block.content : (isOuter ? 'Conteúdo Classificado' : 'Informação Adicional');
+        
+        return (
+            <div className={`my-4 rounded-md border ${isOuter ? 'border-slate-200 dark:border-white/10 bg-white dark:bg-white/5' : 'border-slate-200/50 dark:border-white/5 bg-slate-50 dark:bg-black/20'} overflow-hidden shadow-sm transition-all duration-300`}>
+                <button 
+                    onClick={() => setIsOpen(!isOpen)} 
+                    className={`w-full flex items-center justify-between p-4 text-left transition-colors hover:bg-slate-50 dark:hover:bg-white/5 ${isOpen ? 'border-b border-slate-100 dark:border-white/5' : ''}`}
+                >
+                    <div className="flex items-center gap-3">
+                        <div className={`p-1.5 rounded-sm transition-all ${isOpen ? 'bg-brand text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-400'}`}>
+                            <ChevronRight size={16} className={`transition-transform duration-300 ${isOpen ? 'rotate-90' : ''}`} />
+                        </div>
+                        <span className={`font-poppins font-semibold uppercase tracking-wide ${isOuter ? 'text-sm text-slate-800 dark:text-white' : 'text-xs text-slate-600 dark:text-slate-300'}`}>
+                            <RichText text={title} />
+                        </span>
+                    </div>
+                </button>
+                <div className={`transition-all duration-300 ease-in-out ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0'} overflow-hidden`}>
+                    <div className="p-5 pt-2">
+                        {childrenNodes}
+                    </div>
+                </div>
+            </div>
+        );
       };
 
-      const ContentRenderer = ({ blocks, onSkipWarning }) => {
+      const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) => {
         const processedBlocks = useMemo(() => {
             const groupNodes = (nodes) => {
                 if (!nodes) return [];
@@ -659,11 +766,7 @@
                     
                     if (node.tag === 'mex') {
                         if (!currentMexGroup) {
-                            currentMexGroup = {
-                                id: `mex-group-${node.id}`,
-                                tag: 'mex-group',
-                                items: [node]
-                            };
+                            currentMexGroup = { id: `mex-group-${node.id}`, tag: 'mex-group', items: [node] };
                             result.push(currentMexGroup);
                         } else {
                             currentMexGroup.items.push(node);
@@ -676,12 +779,7 @@
                     if (node.tag === 'p') {
                          const nextNode = (i + 1 < nodes.length) ? nodes[i+1] : null;
                          if (nextNode && nextNode.tag === 'rep') {
-                             result.push({
-                                 id: `qa-group-${node.id}`,
-                                 tag: 'qa-group',
-                                 question: node,
-                                 answer: nextNode
-                             });
+                             result.push({ id: `qa-group-${node.id}`, tag: 'qa-group', question: node, answer: nextNode });
                              i++; 
                              continue;
                          }
@@ -712,70 +810,72 @@
           setClickedIds(prev => { const n = new Set(prev); n.add(id); return n; }); 
         }, [sequence, clickedIds, onSkipWarning]);
         
+        const zoomClass = useMemo(() => {
+             if (textZoom === 0) return 'text-sm md:text-base';
+             if (textZoom === 1) return 'text-base md:text-lg';
+             return 'text-lg md:text-xl';
+        }, [textZoom]);
+
+        const processText = (text) => {
+             if (!text || typeof text !== 'string') return text;
+             return text.replace(/{USERNAME}/g, currentUser?.nickname || 'Aluno');
+        };
+
         const renderBlock = (block) => { 
             const status = { isClicked: clickedIds.has(block.id), isSkipped: skippedIds.has(block.id) }; 
+            const processedContent = processText(block.content);
+
             switch (block.tag) { 
                 case 'mt': 
                     return (
-                        <div key={block.id} className="relative mt-16 mb-8 group">
+                        <div key={block.id} className="relative mt-20 mb-10 group">
                             <div className="absolute -top-6 -left-6 text-[6rem] md:text-[8rem] font-display font-bold text-brand/5 dark:text-brand/10 select-none z-0 pointer-events-none group-hover:text-brand/10 transition-colors">#</div>
                             <div className="relative z-10 pl-6 border-l-4 border-brand">
-                                <h2 className="text-3xl md:text-5xl font-condensed font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none drop-shadow-sm">
-                                    <RichText text={block.content} />
+                                <h2 className="text-3xl md:text-5xl font-poppins font-bold text-slate-900 dark:text-white uppercase tracking-tight leading-none drop-shadow-sm">
+                                    <RichText text={processedContent} />
                                 </h2>
                             </div>
                         </div>
                     );
                 case 'mst': 
                     return (
-                        <div key={block.id} className="mt-10 mb-6 flex items-center gap-4 group">
+                        <div key={block.id} className="mt-12 mb-6 flex items-center gap-4 group">
                             <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/10 flex items-center justify-center text-brand font-bold text-xs shadow-sm border border-slate-200 dark:border-white/10 group-hover:bg-brand group-hover:text-white transition-colors">
                                 <ChevronRight size={16} />
                             </div>
-                            <h3 className="text-xl font-condensed font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide decoration-brand/30 decoration-2 underline-offset-4 group-hover:underline transition-all">
-                                <RichText text={block.content} />
+                            <h3 className="text-xl font-poppins font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide decoration-brand/30 decoration-2 underline-offset-4 group-hover:underline transition-all">
+                                <RichText text={processedContent} />
                             </h3>
                         </div>
                     );
                 case 'mtxt': 
                     return (
                         <div key={block.id} className="mb-4 pl-0 md:pl-12">
-                            <p className="text-sm md:text-base text-slate-600 dark:text-slate-300 leading-relaxed font-medium text-justify">
-                                <RichText text={block.content} />
+                            <p className={`${zoomClass} text-slate-600 dark:text-slate-300 leading-relaxed font-poppins font-medium text-justify`}>
+                                <RichText text={processedContent} />
                             </p>
                         </div>
                     );
                 case 'minfo': 
                     return (
-                        <div key={block.id} className="ml-0 md:ml-12 my-6 bg-blue-50/50 dark:bg-blue-900/10 border border-blue-100 dark:border-blue-900/30 rounded-lg p-5 flex gap-4 shadow-sm hover:shadow-md transition-all">
-                            <div className="shrink-0 w-10 h-10 bg-blue-100 dark:bg-blue-900/30 rounded-full flex items-center justify-center text-blue-600 dark:text-blue-400 border border-blue-200 dark:border-blue-800/30">
-                                <Info size={20} />
-                            </div>
+                        <div key={block.id} className="ml-0 md:ml-12 my-6 bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-blue-500 rounded-r-sm p-5 flex gap-4 shadow-sm">
+                            <div className="shrink-0 pt-1 text-blue-500"><Info size={20} /></div>
                             <div>
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1 flex items-center gap-2">
-                                    Nota Didática
-                                </h4>
-                                <div className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
-                                    <RichText text={block.content} />
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1 font-condensed">Nota Didática</h4>
+                                <div className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins`}>
+                                    <RichText text={processedContent} />
                                 </div>
                             </div>
                         </div>
                     );
                 case 'malert': 
                     return (
-                        <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-lg p-5 flex gap-4 shadow-sm relative overflow-hidden group">
-                            <div className="absolute top-0 right-0 -mt-2 -mr-2 text-red-500/5 group-hover:text-red-500/10 transition-colors pointer-events-none">
-                                <AlertTriangle size={80} />
-                            </div>
-                            <div className="shrink-0 text-red-500 pt-1 relative z-10">
-                                <AlertTriangle size={24} />
-                            </div>
-                            <div className="relative z-10">
-                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 mb-1">
-                                    Ponto de Atenção
-                                </h4>
-                                <div className="text-sm font-bold text-red-900 dark:text-red-200 leading-relaxed">
-                                    <RichText text={block.content} />
+                        <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-sm p-5 flex gap-4 shadow-sm">
+                            <div className="shrink-0 pt-1 text-red-500"><AlertTriangle size={20} /></div>
+                            <div>
+                                <h4 className="text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 mb-1 font-condensed">Ponto de Atenção</h4>
+                                <div className={`${zoomClass} font-bold text-red-900 dark:text-red-200 leading-relaxed font-poppins`}>
+                                    <RichText text={processedContent} />
                                 </div>
                             </div>
                         </div>
@@ -784,20 +884,16 @@
                     return (
                         <div key={block.id} className="ml-0 md:ml-12 my-10 group">
                             <div className="relative">
-                                <div className="absolute -top-3 left-4 bg-brand text-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest font-condensed rounded-sm shadow-md z-20 flex items-center gap-2 transform group-hover:-translate-y-0.5 transition-transform">
+                                <div className="absolute -top-3 left-4 bg-brand text-white px-3 py-1 text-[9px] font-bold uppercase tracking-widest font-condensed rounded-sm shadow-md z-20 flex items-center gap-2">
                                     <Code size={10} className="text-brand-accent" />
                                     <span>{block.items.length > 1 ? 'Exemplos' : 'Exemplo'}</span>
                                 </div>
-                                <div className="bg-[#fcfcfc] dark:bg-[#1a211d] border border-slate-200 dark:border-white/5 border-l-4 border-l-brand rounded-sm shadow-sm relative overflow-hidden group-hover:shadow-md transition-shadow">
-                                    <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#2e5c18 1px, transparent 1px)', backgroundSize: '20px 20px' }}></div>
-                                    <div className="p-6 pt-8 flex flex-col gap-4 relative z-10">
+                                <div className="bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-sm p-6 pt-8">
+                                    <div className="flex flex-col gap-3">
                                         {block.items.map((item, idx) => (
-                                            <div key={item.id} className={`${idx > 0 ? 'pt-4 border-t border-dashed border-slate-200 dark:border-white/10' : ''} flex gap-4`}>
-                                                {block.items.length > 1 && (
-                                                    <span className="text-[10px] font-bold text-brand/50 mt-1 select-none font-mono">{(idx + 1).toString().padStart(2, '0')}</span>
-                                                )}
-                                                <div className="text-sm md:text-base text-slate-700 dark:text-slate-300 font-medium leading-relaxed font-sans italic opacity-90">
-                                                    <RichText text={item.content} />
+                                            <div key={item.id} className={`${idx > 0 ? 'pt-3 border-t border-dashed border-slate-200 dark:border-white/10' : ''} flex gap-4`}>
+                                                <div className={`${zoomClass} text-slate-600 dark:text-slate-300 font-medium leading-relaxed font-mono italic`}>
+                                                    <RichText text={processText(item.content)} />
                                                 </div>
                                             </div>
                                         ))}
@@ -809,52 +905,50 @@
                 case 'mlist': 
                     return (
                         <div key={block.id} className="ml-4 md:ml-16 mb-2 flex items-start gap-3 group">
-                            <div className="mt-1 shrink-0 text-brand/40 group-hover:text-brand transition-colors">
-                                <CheckCircle2 size={16} />
-                            </div>
-                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-justify">
-                                <RichText text={block.content} />
+                            <div className="mt-1.5 shrink-0 text-brand/60 group-hover:text-brand transition-colors"><CheckCircle2 size={14} /></div>
+                            <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-justify`}>
+                                <RichText text={processedContent} />
                             </p>
                         </div>
                     );
                 case 'mpoin': 
                     return (
                         <div key={block.id} className="ml-4 md:ml-16 mb-2 flex items-start gap-3 group">
-                            <div className="mt-2 shrink-0 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full group-hover:bg-brand group-hover:scale-125 transition-all"></div>
-                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium text-justify">
-                                <RichText text={block.content} />
+                            <div className="mt-2.5 shrink-0 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full group-hover:bg-brand transition-colors"></div>
+                            <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins text-justify`}>
+                                <RichText text={processedContent} />
                             </p>
                         </div>
                     );
                 case 'mpoin2': 
                     return (
                         <div key={block.id} className="ml-4 md:ml-16 mb-2 flex items-start gap-3 group">
-                            <p className="text-sm text-slate-700 dark:text-slate-300 leading-relaxed font-medium text-justify">
-                                <RichText text={block.content} />
+                            <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins text-justify`}>
+                                <RichText text={processedContent} />
                             </p>
                         </div>
                     );
-                case 'mbr': 
-                    return <div key={block.id} className="h-6 w-full"></div>;
+                case 'mbr': return <div key={block.id} className="h-6 w-full"></div>;
+                case 'br': return <div key={block.id} className="h-3 w-full"></div>;
                 case 'title': 
-                case 'line': 
-                    return <CopyableText key={block.id} block={block} status={status} onInteract={handleInteract} />;
-                case 'p': 
-                    return <CopyableText key={block.id} block={block} status={status} onInteract={handleInteract} />;
+                case 'line': return <CopyableText key={block.id} block={block} status={status} onInteract={handleInteract} processedContent={processedContent} textSizeClass={zoomClass} />;
+                case 'p': return <CopyableText key={block.id} block={block} status={status} onInteract={handleInteract} processedContent={processedContent} textSizeClass={zoomClass} />;
                 case 'qa-group': 
                      const qaStatus = { isClicked: clickedIds.has(block.question.id), isSkipped: skippedIds.has(block.question.id) };
-                     return <CopyableText key={block.id} block={block.question} status={qaStatus} onInteract={handleInteract} attachedAnswer={block.answer} />;
+                     return <CopyableText key={block.id} block={block.question} status={qaStatus} onInteract={handleInteract} attachedAnswer={block.answer} processedContent={processText(block.question.content)} textSizeClass={zoomClass} />;
                 case 'mp': return <PrivateMessage key={block.id} block={block} status={status} onInteract={handleInteract} />; 
                 case 'att': return (
-                    <div className="flex items-center gap-3 py-2 my-2 px-3 bg-emerald-50 dark:bg-emerald-900/10 border-l-2 border-emerald-500 rounded-r-sm">
-                        <img src="https://i.imgur.com/Nzo9Lg1.png" className="w-5 h-5 flex-shrink-0 object-contain opacity-80" />
-                        <span className="text-xs text-emerald-900 dark:text-emerald-200 font-bold leading-snug"><RichText text={block.content} /></span>
+                    <div className="flex items-start gap-3 my-4 px-6 py-3 bg-emerald-50/50 dark:bg-emerald-900/10 border-l-2 border-emerald-500/50 rounded-r-sm">
+                        <div className="mt-0.5 shrink-0 opacity-80"><img src="https://i.imgur.com/Nzo9Lg1.png" className="w-4 h-4 object-contain" /></div>
+                        <span className="text-sm font-poppins font-medium leading-relaxed text-emerald-900 dark:text-emerald-200"><RichText text={processedContent} /></span>
                     </div>
                 ); 
                 case 'rep': return (
-                    <div className="flex flex-col justify-center py-2 my-2 px-4 bg-slate-50/50 dark:bg-white/[0.02] border-l-2 border-slate-300 dark:border-white/10 rounded-r-sm hover:border-brand/50 transition-colors">
-                        <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest font-condensed leading-none mb-1">Resposta</span>
-                        <span className="text-xs text-slate-700 dark:text-slate-300 font-medium leading-snug"><RichText text={block.content} /></span>
+                    <div className="ml-8 my-2 pl-4 border-l-2 border-slate-200 dark:border-white/10">
+                        <p className={`${zoomClass} text-slate-600 dark:text-slate-400 leading-relaxed font-poppins`}>
+                             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-2 select-none font-condensed">Resposta:</span>
+                             <span className="italic"><RichText text={processedContent} /></span>
+                        </p>
                     </div>
                 ); 
                 case 's1': 
@@ -865,18 +959,16 @@
         return <div className="w-full">{processedBlocks.map(block => renderBlock(block))}</div>;
       };
 
-      const ClassFeedbackForm = ({ professor, initialClassId, initialStartTime, initialStudent, isEvaluation, initialQuestions }) => {
-        const [selectedType, setSelectedType] = useState(isEvaluation ? EVALUATION_MODALITIES[0] : CLASS_TYPES_FEEDBACK[0]); 
+      const ClassFeedbackForm = ({ professor, initialClassId, initialStartTime, initialStudent, initialVerdict, initialComments, initialScore }) => {
+        const [selectedType, setSelectedType] = useState(CLASS_TYPES_FEEDBACK[0]); 
         const [isAdminActivity, setIsAdminActivity] = useState(false); 
         const [students, setStudents] = useState(''); 
         const [verdicts, setVerdicts] = useState({}); 
         const [individualScores, setIndividualScores] = useState({});
         const [individualComments, setIndividualComments] = useState({});
-        const [evalQuestions, setEvalQuestions] = useState({});
-        const [evalMpStatus, setEvalMpStatus] = useState({});
-        const [proofPrint, setProofPrint] = useState('');
         const [copied, setCopied] = useState(false); 
         const [startTime, setStartTime] = useState(new Date());
+        const [isProcessing, setIsProcessing] = useState(false);
 
         const studentList = useMemo(() => {
             if (!students.trim()) return [];
@@ -884,14 +976,7 @@
         }, [students]);
 
         useEffect(() => { 
-            if (isEvaluation) {
-                if(initialClassId) {
-                     const type = EVALUATION_MODALITIES.find(t => t.id === initialClassId) || EVALUATION_MODALITIES[0];
-                     setSelectedType(type);
-                } else {
-                    setSelectedType(EVALUATION_MODALITIES[0]);
-                }
-            } else if (initialClassId) { 
+            if (initialClassId) { 
                 const type = CLASS_TYPES_FEEDBACK.find(t => t.id === initialClassId) || CLASS_TYPES_FEEDBACK[0]; 
                 setSelectedType(type); 
                 if (initialClassId === 'admin_activity') { 
@@ -902,88 +987,117 @@
             } 
             if (initialStartTime) setStartTime(initialStartTime); 
             if (initialStudent) setStudents(initialStudent); 
-        }, [initialClassId, initialStartTime, initialStudent, isEvaluation]);
+        }, [initialClassId, initialStartTime, initialStudent]);
 
+        // Effect to apply initial values to the student map once studentList is populated
         useEffect(() => {
-            setVerdicts(prev => {
-                const next = { ...prev };
-                studentList.forEach(s => { if (!next[s]) next[s] = 'Aprovado'; });
-                return next;
-            });
-            setIndividualScores(prev => {
-                const next = { ...prev };
-                studentList.forEach(s => { 
-                    if (next[s] === undefined) next[s] = isAdminActivity ? 'Sim' : isEvaluation ? '10' : ''; 
-                });
-                return next;
-            });
-             setIndividualComments(prev => {
-                const next = { ...prev };
-                studentList.forEach(s => { if (next[s] === undefined) next[s] = ''; });
-                return next;
-            });
-            if (isEvaluation) {
-                setEvalQuestions(prev => {
+            if (studentList.length > 0) {
+                setVerdicts(prev => {
                     const next = { ...prev };
                     studentList.forEach(s => { 
-                        if (!next[s]) next[s] = initialQuestions || ''; 
+                        if (!next[s]) next[s] = initialVerdict || 'Aprovado'; 
                     });
                     return next;
                 });
-                setEvalMpStatus(prev => {
+                setIndividualScores(prev => {
                     const next = { ...prev };
-                    studentList.forEach(s => { if (!next[s]) next[s] = 'Sim'; });
+                    studentList.forEach(s => { 
+                        // For Admin Activities, initialScore controls "Sim" (sent) or "Não"
+                        // If standard class, it's a number. 
+                        if (next[s] === undefined) next[s] = initialScore || (isAdminActivity ? 'Sim' : '0'); 
+                    });
+                    return next;
+                });
+                setIndividualComments(prev => {
+                    const next = { ...prev };
+                    studentList.forEach(s => { 
+                        if (next[s] === undefined) next[s] = initialComments || ''; 
+                    });
                     return next;
                 });
             }
-        }, [studentList, isAdminActivity, isEvaluation, initialQuestions]);
+        }, [studentList, initialVerdict, initialComments, initialScore, isAdminActivity]);
 
         const formatReport = () => { 
             let report = "";
             const now = new Date();
 
-            if (isEvaluation) {
-            } else {
-                const typeName = isAdminActivity ? `${selectedType.name} (Atividade)` : selectedType.name; 
-                report = `RELATÓRIO DE AULA - ${typeName}\n----------------------------------------\nProfessor: ${professor.nickname}\nInício: ${startTime.toLocaleString('pt-BR')}\nFim: ${now.toLocaleString('pt-BR')}\n\n`;
+            const typeName = isAdminActivity ? `${selectedType.name} (Atividade)` : selectedType.name; 
+            report = `RELATÓRIO DE AULA - ${typeName}\n----------------------------------------\nProfessor: ${professor.nickname}\nInício: ${startTime.toLocaleString('pt-BR')}\nFim: ${now.toLocaleString('pt-BR')}\n\n`;
 
-                if (studentList.length === 0) {
-                    report += "Nenhum aluno registrado.\n";
-                } else {
-                    studentList.forEach(student => {
-                        const v = (verdicts[student] || 'Aprovado').toUpperCase();
-                        const s = individualScores[student] || (isAdminActivity ? 'Sim' : '0');
-                        const c = individualComments[student] || 'Sem observações.';
-                        
-                        report += `ALUNO: ${student}\n`;
-                        report += `VEREDITO: ${v}\n`;
-                        
-                        if (isAdminActivity) {
-                            report += `ATIVIDADE ENVIADA: ${s.toUpperCase()}\n`;
-                        } else {
-                            report += `PONTUAÇÃO: ${s}/${selectedType.maxScore}\n`;
-                        }
-                        
-                        report += `OBSERVAÇÕES: ${c}\n\n`;
-                    });
-                }
+            if (studentList.length === 0) {
+                report += "Nenhum aluno registrado.\n";
+            } else {
+                studentList.forEach(student => {
+                    const v = (verdicts[student] || 'Aprovado').toUpperCase();
+                    const s = individualScores[student] || (isAdminActivity ? 'Sim' : '0');
+                    const c = individualComments[student] || 'Sem observações.';
+                    
+                    report += `ALUNO: ${student}\n`;
+                    report += `VEREDITO: ${v}\n`;
+                    
+                    if (isAdminActivity) {
+                        report += `ATIVIDADE ENVIADA: ${s.toUpperCase()}\n`;
+                    } else {
+                        report += `PONTUAÇÃO: ${s}/${selectedType.maxScore}\n`;
+                    }
+                    
+                    report += `OBSERVAÇÕES: ${c}\n\n`;
+                });
             }
             
             report += `----------------------------------------`;
             return report.trim(); 
         };
         
-        const handleCopyReport = () => { navigator.clipboard.writeText(formatReport()); setCopied(true); setTimeout(() => setCopied(false), 2000); };
+        const handleFinish = async () => { 
+            setIsProcessing(true);
+            
+            // 1. Copy Report
+            navigator.clipboard.writeText(formatReport()); 
+            
+            // 2. Check for Admin Activity Failures and Send MPs
+            if (isAdminActivity) {
+                const failedStudents = studentList.filter(s => individualScores[s] === 'Não');
+                let sentCount = 0;
+                let errorCount = 0;
+
+                if (failedStudents.length > 0) {
+                    try {
+                        const resp = await fetch('https://raw.githubusercontent.com/brendonrcc/CFOmps/refs/heads/main/cfoinsa');
+                        if (!resp.ok) throw new Error('Template load failed');
+                        const text = await resp.text();
+
+                        for (const student of failedStudents) {
+                            const success = await sendPrivateMessage(student, '[CFO] Reprovação na Atividade', text);
+                            if (success) sentCount++; else errorCount++;
+                        }
+                        
+                        let msg = "Relatório copiado!";
+                        if (sentCount > 0) msg += ` ${sentCount} MP(s) de reprovação enviada(s).`;
+                        if (errorCount > 0) msg += ` Falha ao enviar ${errorCount} MP(s).`;
+                        alert(msg);
+                    } catch (e) {
+                        console.error(e);
+                        alert("Relatório copiado, mas houve erro ao carregar o modelo de MP.");
+                    }
+                } else {
+                    alert("Relatório copiado com sucesso!");
+                }
+            } else {
+                setCopied(true); 
+                setTimeout(() => setCopied(false), 2000);
+            }
+            
+            setIsProcessing(false);
+        };
+
         const formatDateTimeForInput = (date) => { const d = new Date(date); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
         
         const updateStudentData = (student, field, value) => {
              if (field === 'verdict') setVerdicts(prev => ({...prev, [student]: value}));
              if (field === 'score') {
-                 if (isEvaluation) {
-                     if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) <= 10)) {
-                         setIndividualScores(prev => ({...prev, [student]: value}));
-                     }
-                 } else if (!isAdminActivity) {
+                 if (!isAdminActivity) {
                       if (value === '' || (/^\d+$/.test(value) && parseInt(value, 10) <= selectedType.maxScore)) {
                           setIndividualScores(prev => ({...prev, [student]: value}));
                       }
@@ -992,15 +1106,13 @@
                  }
              }
              if (field === 'comment') setIndividualComments(prev => ({...prev, [student]: value}));
-             if (field === 'questions') setEvalQuestions(prev => ({...prev, [student]: value}));
-             if (field === 'mpStatus') setEvalMpStatus(prev => ({...prev, [student]: value}));
         };
 
         return (
           <div className="animate-fade-in max-w-5xl mx-auto pb-20">
             <div className="flex flex-col gap-3 border-b-2 border-slate-200 dark:border-white/5 pb-6 mb-10">
                 <h2 className="text-4xl font-condensed font-bold text-slate-900 dark:text-white uppercase italic tracking-tight">
-                    {isEvaluation ? 'Relatório de Avaliação' : 'Formulário de Postagem'}
+                    Formulário de Postagem
                 </h2>
                 <p className="text-slate-500 text-base font-medium">Preenchimento obrigatório para homologação.</p>
             </div>
@@ -1008,7 +1120,7 @@
             <div className="flex flex-col gap-10">
                 <div className="bg-white dark:bg-[#121813] border border-slate-200 dark:border-white/5 rounded-lg p-8 shadow-sm">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-brand mb-6 flex items-center gap-2">
-                        <LayoutDashboard size={16} /> Dados da {isEvaluation ? 'Avaliação' : 'Instrução'}
+                        <LayoutDashboard size={16} /> Dados da Instrução
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
@@ -1016,18 +1128,34 @@
                             <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Modalidade</label>
                             <div className="relative">
                                 <select value={selectedType.id} onChange={(e) => { 
-                                    const source = isEvaluation ? EVALUATION_MODALITIES : CLASS_TYPES_FEEDBACK;
+                                    const source = CLASS_TYPES_FEEDBACK;
                                     const newType = source.find(t => t.id === e.target.value); 
                                     if (newType) { 
                                         setSelectedType(newType); 
                                         setIndividualScores({}); 
-                                        if (!isEvaluation && newType.id !== 'admin') setIsAdminActivity(false); 
+                                        if (newType.id !== 'admin') setIsAdminActivity(false);
+                                        if (newType.id === 'admin') setIsAdminActivity(false);
                                     } 
                                 }} className="w-full h-14 pl-4 pr-10 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all appearance-none uppercase cursor-pointer">
-                                    {(isEvaluation ? EVALUATION_MODALITIES : CLASS_TYPES_FEEDBACK).map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
+                                    {CLASS_TYPES_FEEDBACK.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
                                 </select>
                                 <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
                             </div>
+                            
+                            {/* Admin specific toggle */}
+                            {selectedType.id === 'admin' && (
+                                <div className="mt-2 p-3 bg-brand/5 border border-brand/10 rounded-sm flex items-center gap-4">
+                                    <span className="text-[10px] font-bold uppercase tracking-widest text-brand">Tipo:</span>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input type="radio" checked={!isAdminActivity} onChange={() => setIsAdminActivity(false)} className="accent-brand cursor-pointer" />
+                                        <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 group-hover:text-brand transition-colors">Aula</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input type="radio" checked={isAdminActivity} onChange={() => setIsAdminActivity(true)} className="accent-brand cursor-pointer" />
+                                        <span className="text-xs font-bold uppercase text-slate-600 dark:text-slate-400 group-hover:text-brand transition-colors">Atividade</span>
+                                    </label>
+                                </div>
+                            )}
                         </div>
                         
                         <div className="space-y-3">
@@ -1090,12 +1218,14 @@
                                         <div className="p-6 space-y-6">
                                             <div className="flex items-center gap-4">
                                                 <div className="w-1/3">
-                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">{isAdminActivity ? 'Entrega' : 'Pontuação'}</label>
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">{isAdminActivity ? 'Envio da Atividade' : 'Pontuação'}</label>
                                                     {isAdminActivity ? (
-                                                        <select value={individualScores[student] || 'Sim'} onChange={(e) => updateStudentData(student, 'score', e.target.value)} className="w-full h-10 px-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-xs font-bold uppercase outline-none focus:border-brand cursor-pointer">
-                                                            <option value="Sim">OK</option>
-                                                            <option value="Não">Pend.</option>
-                                                        </select>
+                                                        <div className="flex flex-col gap-2">
+                                                            <select value={individualScores[student] || 'Sim'} onChange={(e) => updateStudentData(student, 'score', e.target.value)} className="w-full h-10 px-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-xs font-bold uppercase outline-none focus:border-brand cursor-pointer">
+                                                                <option value="Sim">Sim</option>
+                                                                <option value="Não">Não</option>
+                                                            </select>
+                                                        </div>
                                                     ) : (
                                                         <div className="relative">
                                                             <input type="number" value={individualScores[student] || ''} onChange={(e) => updateStudentData(student, 'score', e.target.value)} min="0" max={selectedType.maxScore} className="w-full h-10 px-3 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-xs font-bold text-center outline-none focus:border-brand placeholder-slate-400" placeholder="0" />
@@ -1125,9 +1255,9 @@
 
                 <div className="fixed bottom-0 left-0 right-0 p-4 bg-white/90 dark:bg-[#0c120e]/90 backdrop-blur-md border-t border-brand/20 z-40 flex justify-end shadow-2xl animate-fade-in">
                     <div className="max-w-7xl w-full mx-auto flex justify-end">
-                        <button onClick={handleCopyReport} className="h-14 px-8 bg-brand hover:bg-brand-hover text-white font-condensed font-bold uppercase tracking-widest text-sm rounded-sm shadow-lg hover:shadow-brand/30 hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95">
-                            {copied ? <Check size={20} /> : <Copy size={20} />}
-                            <span>{copied ? 'Relatório Copiado' : 'Copiar Relatório Final'}</span>
+                        <button onClick={handleFinish} disabled={isProcessing} className="h-14 px-8 bg-brand hover:bg-brand-hover text-white font-condensed font-bold uppercase tracking-widest text-sm rounded-sm shadow-lg hover:shadow-brand/30 hover:-translate-y-1 transition-all flex items-center gap-3 active:scale-95 disabled:opacity-50 disabled:translate-y-0 disabled:cursor-wait">
+                            {isProcessing ? <Loader2 size={20} className="animate-spin" /> : (copied ? <Check size={20} /> : <Copy size={20} />)}
+                            <span>{isProcessing ? 'Processando...' : (copied ? 'Relatório Copiado' : 'Copiar Relatório Final')}</span>
                         </button>
                     </div>
                 </div>
@@ -1273,12 +1403,79 @@
       };
 
       const CorrectionTool = ({ currentUser, onNavigateToReport }) => {
-        const [studentNick, setStudentNick] = useState(''); const [bbcodeInput, setBbcodeInput] = useState(''); const [result, setResult] = useState({ approved: false, missing: [], checked: false });
+        const [studentNick, setStudentNick] = useState(''); 
+        const [bbcodeInput, setBbcodeInput] = useState(''); 
+        const [result, setResult] = useState({ approved: false, missing: [], checked: false });
+        const [sendingMp, setSendingMp] = useState(false);
+        const [postingForum, setPostingForum] = useState(false);
+
         const REQUIRED_TAGS = ['[/b]', '[/i]', '[/u]', '[/strike]', '[/code]', '[/spoiler]', '[/table]', '[/img]', '[/font]', '[url=', '[size=', '[color='];
+        
+        const TAG_NAMES = {
+            '[/b]': 'Negrito',
+            '[/i]': 'Itálico',
+            '[/u]': 'Sublinhado',
+            '[/strike]': 'Riscado',
+            '[/code]': 'Código',
+            '[/spoiler]': 'Spoiler',
+            '[/table]': 'Tabela',
+            '[/img]': 'Imagem',
+            '[/font]': 'Fonte',
+            '[url=': 'Link/URL',
+            '[size=': 'Tamanho',
+            '[color=': 'Cor'
+        };
+
         const handleCheck = () => { if (!bbcodeInput.trim()) return; const missingTags = REQUIRED_TAGS.filter(tag => !bbcodeInput.includes(tag)); setResult({ approved: missingTags.length === 0, missing: missingTags, checked: true }); };
         const handleClear = () => { setStudentNick(''); setBbcodeInput(''); setResult({ approved: false, missing: [], checked: false }); };
-        const handleForumPost = () => alert("Redirecionando para o tópico de postagem no fórum (Simulação).");
-        const handleMpSend = () => alert(`Redirecionando para enviar MP para ${studentNick || 'o aluno'}.`);
+        
+        const handleMpSend = async (isApproval) => {
+             if (!studentNick.trim()) {
+                 alert('Por favor, informe o nickname do aluno.');
+                 return;
+             }
+             
+             setSendingMp(true);
+             try {
+                 const url = isApproval 
+                     ? "https://raw.githubusercontent.com/brendonrcc/CFOmps/refs/heads/main/cfoapro" 
+                     : "https://raw.githubusercontent.com/brendonrcc/CFOmps/refs/heads/main/cforep";
+                 
+                 const resp = await fetch(url);
+                 if (!resp.ok) throw new Error('Falha ao carregar modelo de MP');
+                 const template = await resp.text();
+                 
+                 let motives = "";
+                 if (isApproval) {
+                     motives = "Todos os requisitos obrigatórios foram atendidos.";
+                 } else {
+                     const missingNames = result.missing.map(tag => TAG_NAMES[tag] || tag);
+                     if (missingNames.length === 0) motives = "Erro desconhecido.";
+                     else if (missingNames.length === 1) motives = missingNames[0];
+                     else {
+                         const last = missingNames.pop();
+                         motives = missingNames.join(', ') + ' e ' + last;
+                     }
+                 }
+                 
+                 const messageBody = template.replace('{MOTIVOS}', motives);
+                 const subject = isApproval ? "CFO - Atividade Aprovada" : "CFO - Correção de Atividade";
+                 
+                 const success = await sendPrivateMessage(studentNick, subject, messageBody);
+                 
+                 if (success) {
+                     alert(`MP enviada com sucesso para ${studentNick}!`);
+                 } else {
+                     alert('Erro ao enviar MP. Verifique o login no fórum.');
+                 }
+             } catch (error) {
+                 console.error(error);
+                 alert('Erro ao processar envio da mensagem.');
+             } finally {
+                 setSendingMp(false);
+             }
+        };
+
         const handlePaste = async () => { 
             try { 
                 const text = await navigator.clipboard.readText(); 
@@ -1288,6 +1485,57 @@
                 console.error(err);
                 alert("Acesso à área de transferência bloqueado. Cole manualmente (Ctrl+V).");
             } 
+        };
+
+        const handlePostReport = (approved) => {
+            if (!studentNick.trim()) {
+                alert('Preencha o nickname do aluno.');
+                return;
+            }
+            
+            let reasons = "Sem observações.";
+            if (!approved && result.missing.length > 0) {
+                 const missingNames = result.missing.map(tag => TAG_NAMES[tag] || tag);
+                 if (missingNames.length === 1) reasons = `Faltou utilizar: ${missingNames[0]}.`;
+                 else {
+                     const last = missingNames.pop();
+                     reasons = `Faltou utilizar: ${missingNames.join(', ')} e ${last}.`;
+                 }
+            }
+
+            onNavigateToReport({
+                nick: studentNick,
+                approved: approved,
+                comments: reasons
+            });
+        };
+
+        const handleForumPost = async () => {
+            if (!studentNick.trim()) { alert("Preencha o nickname do aluno."); return; }
+            
+            setPostingForum(true);
+            
+            const status = result.approved ? 'Aprovado' : 'Reprovado';
+            const motivo = result.approved ? 'Cumpriu os requisitos.' : 'Não cumpriu os requisitos.';
+            
+            const message = `[font=Poppins][center][color=#528c16][b]RESULTADO DA ATIVIDADE[/b][/color][/center]
+
+[color=#528c16][b]Professor(a):[/b][/color] ${currentUser.nickname}
+[color=#528c16][b]Aluno(a):[/b][/color] ${studentNick}
+[color=#528c16][b]Veredito:[/b][/color] ${status}
+[color=#528c16][b]Motivo(s):[/b][/color] ${motivo}
+[color=#528c16][b]Spoiler:[/b][/color]
+[spoiler="Atividade"]${bbcodeInput}[/spoiler][/font]`;
+
+            try {
+                await postToForumTopic(1, message);
+                alert('Postagem realizada com sucesso!');
+            } catch (e) {
+                console.error(e);
+                alert('Erro ao postar: ' + e.message);
+            } finally {
+                setPostingForum(false);
+            }
         };
 
         return (
@@ -1393,7 +1641,7 @@
                                                     {result.missing.map((tag, idx) => (
                                                         <span key={idx} className="px-2 py-1 bg-white dark:bg-black/40 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 rounded-sm text-[10px] font-mono font-bold flex items-center gap-1">
                                                             <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                                                            {tag}
+                                                            {TAG_NAMES[tag] || tag}
                                                         </span>
                                                     ))}
                                                 </div>
@@ -1404,19 +1652,28 @@
                                 
                                 {result.approved && (
                                     <div className="mt-6 grid grid-cols-1 gap-3">
-                                        <button onClick={handleForumPost} className="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group">
-                                            <Globe size={14} className="group-hover:scale-110 transition-transform" /> Acessar Fórum
+                                        <button onClick={() => handlePostReport(true)} className="py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group">
+                                            <FileSignature size={14} className="group-hover:scale-110 transition-transform" /> Postar Aprovação
                                         </button>
-                                        <button onClick={() => onNavigateToReport(studentNick)} className="py-3 bg-slate-800 dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-200 font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group">
-                                            <FileText size={14} className="group-hover:scale-110 transition-transform" /> Gerar Relatório
+                                        <button onClick={handleForumPost} disabled={postingForum} className="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group disabled:opacity-50">
+                                            {postingForum ? <Loader2 size={14} className="animate-spin" /> : <Globe size={14} className="group-hover:scale-110 transition-transform" />} Postar no Fórum
+                                        </button>
+                                        <button onClick={() => handleMpSend(true)} disabled={sendingMp} className="py-3 bg-slate-800 dark:bg-white text-white dark:text-black hover:bg-slate-900 dark:hover:bg-slate-200 font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group disabled:opacity-50">
+                                            {sendingMp ? <Loader2 size={14} className="animate-spin" /> : <SendHorizontal size={14} className="group-hover:scale-110 transition-transform" />} Enviar MP Aprovação
                                         </button>
                                     </div>
                                 )}
                                 
                                 {!result.approved && (
-                                    <div className="mt-6">
-                                        <button onClick={() => handleMpSend()} className="w-full py-3 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/30 font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all">
-                                            <SendHorizontal size={14} /> Notificar Aluno
+                                    <div className="mt-6 grid grid-cols-1 gap-3">
+                                        <button onClick={() => handlePostReport(false)} className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group">
+                                            <FileSignature size={14} className="group-hover:scale-110 transition-transform" /> Postar Reprovação
+                                        </button>
+                                        <button onClick={handleForumPost} disabled={postingForum} className="py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all shadow-md group disabled:opacity-50">
+                                            {postingForum ? <Loader2 size={14} className="animate-spin" /> : <Globe size={14} className="group-hover:scale-110 transition-transform" />} Postar no Fórum
+                                        </button>
+                                        <button onClick={() => handleMpSend(false)} disabled={sendingMp} className="w-full py-3 bg-red-100 dark:bg-red-900/20 hover:bg-red-200 dark:hover:bg-red-900/30 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-500/30 font-bold rounded-sm text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all disabled:opacity-50">
+                                            {sendingMp ? <Loader2 size={14} className="animate-spin" /> : <SendHorizontal size={14} />} Enviar MP Reprovação
                                         </button>
                                     </div>
                                 )}
@@ -1439,9 +1696,9 @@
 
       const MENU_ITEMS = [
         { id: 'classes', label: 'Aulas e Scripts', icon: CustomCourseIcon }, 
-        { id: 'reports', label: 'Formulário de Postagem', icon: FileText },
-        { id: 'history', label: 'Relatórios de Aulas', icon: ClipboardList },
-        { id: 'correction', label: 'Ferramenta de Correção', icon: PenTool },
+        { id: 'reports', label: 'Formulário de Postagem', icon: CustomReportIcon },
+        { id: 'history', label: 'Relatórios de Aulas', icon: CustomHistoryIcon },
+        { id: 'correction', label: 'Ferramenta de Correção', icon: CustomCorrectionIcon },
         { id: 'manual_prof', label: 'Manual do Professor', icon: CustomProfessorIcon }, 
       ];
 
@@ -1468,7 +1725,7 @@
                             onClick={() => { navigateTo('home'); onClose(); }}
                             className={`flex items-center w-full px-5 py-4 rounded-sm transition-all font-condensed font-bold uppercase tracking-wide text-sm ${currentView === 'home' ? 'bg-brand text-white shadow-md' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-dark-hover border border-transparent'}`}
                         >
-                            <LayoutDashboard size={18} className={currentView === 'home' ? 'text-white' : 'text-slate-400'} /> 
+                            <CustomHomeIcon size={18} className={currentView === 'home' ? '' : 'opacity-70 grayscale'} /> 
                             <span className="ml-4">Início</span>
                         </button>
 
@@ -1518,6 +1775,7 @@
         const [reportData, setReportData] = useState(null);
         const [manualContent, setManualContent] = useState([]);
         const [rerollTrigger, setRerollTrigger] = useState(0);
+        const [textZoom, setTextZoom] = useState(0);
 
         useEffect(() => {
           const root = document.documentElement;
@@ -1566,7 +1824,17 @@
 
         const handlePostReport = () => { if (selectedClass && classStartTime) { setReportData({ classId: selectedClass.id, startTime: classStartTime }); setCurrentView('reports'); setSelectedClass(null); } };
         
-        const handleNavigateFromCorrection = (studentNick) => { setReportData({ classId: 'admin_activity', startTime: new Date(), studentNick: studentNick }); setCurrentView('reports'); };
+        const handleNavigateFromCorrection = (data) => { 
+            setReportData({ 
+                classId: 'admin_activity', 
+                startTime: new Date(), 
+                studentNick: data.nick,
+                verdict: data.approved ? 'Aprovado' : 'Reprovado',
+                score: 'Sim', // Indicates Activity was Sent
+                comments: data.comments
+            }); 
+            setCurrentView('reports'); 
+        };
 
         const triggerWarning = useCallback(() => {
           setShowWarning(true);
@@ -1850,6 +2118,28 @@
                               </div>
                               
                               <div className="flex items-center gap-4 w-full md:w-auto">
+                                  <div className="flex items-center bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-sm mr-2 shadow-sm">
+                                      <button 
+                                        onClick={() => setTextZoom(Math.max(0, textZoom - 1))}
+                                        disabled={textZoom <= 0}
+                                        className="w-10 h-12 flex items-center justify-center text-slate-500 hover:text-brand hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors border-r border-slate-200 dark:border-white/5"
+                                        title="Diminuir Fonte"
+                                      >
+                                          <Minus size={16} />
+                                      </button>
+                                      <div className="px-3 flex items-center justify-center gap-2 text-xs font-bold uppercase tracking-widest text-slate-400 select-none w-20">
+                                          <Type size={14} />
+                                          <span>{textZoom === 0 ? '100%' : textZoom === 1 ? '125%' : '150%'}</span>
+                                      </div>
+                                      <button 
+                                        onClick={() => setTextZoom(Math.min(2, textZoom + 1))}
+                                        disabled={textZoom >= 2}
+                                        className="w-10 h-12 flex items-center justify-center text-slate-500 hover:text-brand hover:bg-slate-50 dark:hover:bg-white/10 disabled:opacity-30 disabled:hover:text-slate-500 transition-colors border-l border-slate-200 dark:border-white/5"
+                                        title="Aumentar Fonte"
+                                      >
+                                          <Plus size={16} />
+                                      </button>
+                                  </div>
                                   <div className="hidden xl:flex flex-col items-end border-r border-slate-300 dark:border-white/10 pr-6 mr-2">
                                       <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">Professor(a)</span>
                                       <span className="font-condensed font-bold text-sm text-slate-700 dark:text-slate-300 uppercase">{currentUser?.nickname}</span>
@@ -1874,7 +2164,7 @@
                                   <div className="watermark"><img src={LOGO_URL} className="w-full h-auto grayscale opacity-10" /></div>
                                   
                                   <div className="relative z-10 space-y-2">
-                                      <ContentRenderer blocks={classContent} onSkipWarning={triggerWarning} />
+                                      <ContentRenderer blocks={classContent} onSkipWarning={triggerWarning} currentUser={currentUser} textZoom={textZoom} />
                                   </div>
                               </div>
                           )}
@@ -1888,6 +2178,9 @@
                             initialClassId={reportData?.classId} 
                             initialStartTime={reportData?.startTime} 
                             initialStudent={reportData?.studentNick}
+                            initialVerdict={reportData?.verdict}
+                            initialScore={reportData?.score}
+                            initialComments={reportData?.comments}
                             isEvaluation={false}
                             initialQuestions={null}
                         />
@@ -1927,7 +2220,7 @@
                                  <div className="bg-white dark:bg-dark-surface p-8 md:p-12 shadow-folder rounded-sm border border-slate-200 dark:border-white/5 relative">
                                       <div className="watermark"><img src={LOGO_URL} className="w-full h-auto grayscale opacity-5" /></div>
                                       <div className="relative z-10">
-                                         <ContentRenderer blocks={manualContent} onSkipWarning={() => {}} />
+                                         <ContentRenderer blocks={manualContent} onSkipWarning={() => {}} currentUser={currentUser} textZoom={textZoom} />
                                       </div>
                                  </div>
                             )}
