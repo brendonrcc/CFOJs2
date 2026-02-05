@@ -1714,7 +1714,7 @@
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 text-red-500">
                                                 <AlertTriangle size={14} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Violações Detectadas</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">AUSÊNCIA DE:</span>
                                             </div>
                                             <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/20 rounded-sm p-3">
                                                 <div className="flex flex-wrap gap-2">
