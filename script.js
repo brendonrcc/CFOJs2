@@ -108,10 +108,10 @@
       const LOGO_URL = "https://i.imgur.com/ScdmxL5.png";
 
       const CLASSES = [
-        { id: 'admin', name: 'Administração e Tecnologia do Fórum', gid: '0', description: 'Gestão administrativa e protocolos.', icon: 'https://i.imgur.com/x8lj35t.png' },
-        { id: 'mil_sci', name: 'Ciências Militares', gid: '971998757', description: 'Táticas, estratégias e estudos de campo.', icon: 'https://i.imgur.com/oO2aF2k.png' },
-        { id: 'mil_career', name: 'Carreira Militar', gid: '303472444', description: 'Guia de progressão e hierarquia.', icon: 'https://i.imgur.com/Na76QYn.png' },
-        { id: 'practice', name: 'Práticas Militares e Legislação', gid: '1700831677', description: 'Treinamentos práticos e simulações.', icon: 'https://i.imgur.com/lR1RzIE.png' },
+        { id: 'admin', name: 'Administração e Tecnologia do Fórum', gid: '0', description: 'Script da matéria Administração e Tecnologia do Fórum', icon: 'https://i.imgur.com/x8lj35t.png' },
+        { id: 'mil_sci', name: 'Ciências Militares', gid: '971998757', description: 'Script da matéria Ciências Militares', icon: 'https://i.imgur.com/oO2aF2k.png' },
+        { id: 'mil_career', name: 'Carreira Militar', gid: '303472444', description: 'Script da matéria Carreira Militar', icon: 'https://i.imgur.com/Na76QYn.png' },
+        { id: 'practice', name: 'Práticas Militares e Legislação', gid: '1700831677', description: 'Script da matéria Práticas Militares e Legislação', icon: 'https://i.imgur.com/lR1RzIE.png' },
       ];
 
       const CLASS_TYPES_FEEDBACK = [
@@ -1217,18 +1217,18 @@
                 <h2 className="text-4xl font-condensed font-bold text-slate-900 dark:text-white uppercase italic tracking-tight">
                     Formulário de Postagem
                 </h2>
-                <p className="text-slate-500 text-base font-medium">Preenchimento obrigatório para homologação.</p>
+                <p className="text-slate-500 text-base font-medium">Preenchimento de informações.</p>
             </div>
 
             <div className="flex flex-col gap-10">
                 <div className="bg-white dark:bg-[#121813] border border-slate-200 dark:border-white/5 rounded-lg p-8 shadow-sm">
                     <h3 className="text-sm font-bold uppercase tracking-widest text-brand mb-6 flex items-center gap-2">
-                        <LayoutDashboard size={16} /> Dados da Instrução
+                        <LayoutDashboard size={16} /> Dados da aula
                     </h3>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
                         <div className="space-y-3">
-                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Modalidade</label>
+                            <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Aula/Curso</label>
                             <div className="relative">
                                 <select value={selectedType.id} onChange={(e) => { 
                                     const source = CLASS_TYPES_FEEDBACK;
@@ -1268,7 +1268,7 @@
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Lista de Cadetes (Separados por barra /)</label>
+                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Aluno (Quando tiver mais de um separe com " / ")</label>
                         <div className="relative">
                             <Users className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
                             <input type="text" value={students} onChange={(e) => setStudents(e.target.value)} className="w-full h-14 pl-12 pr-4 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand outline-none transition-all uppercase placeholder-slate-400" placeholder="Ex: Nick1 / Nick2 / Nick3" />
@@ -1280,7 +1280,7 @@
                     {studentList.length > 0 && (
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-condensed font-bold uppercase text-slate-800 dark:text-white">
-                                Avaliação Individual <span className="text-brand ml-2">({studentList.length})</span>
+                                Aluno(s) <span className="text-brand ml-2">({studentList.length})</span>
                             </h3>
                             <div className="h-px bg-slate-200 dark:bg-white/10 flex-1 ml-6"></div>
                         </div>
@@ -1292,7 +1292,7 @@
                                 <Users size={32} />
                             </div>
                             <h4 className="text-lg font-bold text-slate-500 uppercase tracking-wide">Lista de Alunos Vazia</h4>
-                            <p className="text-slate-400 text-sm mt-1">Adicione os nicknames no painel acima para iniciar a avaliação.</p>
+                            <p className="text-slate-400 text-sm mt-1">Adicione os nicknames no painel acima antes de enviar.</p>
                         </div>
                     ) : (
                         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
@@ -1307,7 +1307,7 @@
                                                 <div className={`absolute bottom-0 inset-x-0 h-1 transition-colors ${isApproved ? 'bg-green-500' : isReproved ? 'bg-red-500' : 'bg-slate-300'}`}></div>
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Cadete</p>
+                                                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Aluno(a)</p>
                                                 <h4 className="text-xl font-condensed font-bold uppercase text-slate-800 dark:text-white truncate">{student}</h4>
                                             </div>
                                             <div className="flex flex-col items-end">
@@ -1337,9 +1337,9 @@
                                                     )}
                                                 </div>
                                                 <div className="w-2/3">
-                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">Resultado Final</label>
+                                                    <label className="text-[10px] font-bold uppercase tracking-widest text-slate-400 block mb-2">Resultado</label>
                                                     <div className={`h-10 px-4 flex items-center justify-center rounded-md font-bold uppercase text-[10px] tracking-wide border transition-colors ${isApproved ? 'bg-green-50 dark:bg-green-900/20 border-green-200 dark:border-green-800 text-green-700 dark:text-green-400' : isReproved ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800 text-red-700 dark:text-red-400' : 'bg-slate-50 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-500'}`}>
-                                                            {isApproved ? 'Aprovado no Módulo' : 'Reprovado no Módulo'}
+                                                            {isApproved ? 'Aprovado' : 'Reprovado'}
                                                     </div>
                                                 </div>
                                             </div>
@@ -1419,7 +1419,7 @@
           <div className="space-y-8 animate-fade-in">
             <div className="flex flex-col gap-2 border-b-2 border-slate-100 dark:border-white/5 pb-4">
                 <h2 className="text-2xl font-condensed font-bold text-slate-900 dark:text-white uppercase italic">Relatório de Aulas</h2>
-                <p className="text-slate-500 text-sm font-medium">Histórico completo de cursos.</p>
+                <p className="text-slate-500 text-sm font-medium">Histórico de aulas.</p>
             </div>
             
             <div className="flex flex-col md:flex-row gap-4">
@@ -1453,11 +1453,11 @@
                         <thead>
                             <tr className="bg-slate-50 dark:bg-dark-element text-xs uppercase tracking-widest text-brand font-condensed font-bold border-b border-brand/20">
                                 <th className="px-6 py-4 whitespace-nowrap">Data</th>
-                                <th className="px-6 py-4">Módulo</th>
-                                <th className="px-6 py-4">Instrutor</th>
+                                <th className="px-6 py-4">Aula/Curso</th>
+                                <th className="px-6 py-4">Professor(a)</th>
                                 <th className="px-6 py-4">Aluno(s)</th>
                                 <th className="px-6 py-4 text-center">Status</th>
-                                <th className="px-6 py-4 text-center">Nota</th>
+                                <th className="px-6 py-4 text-center">Nota/Envio de MP</th>
                             </tr>
                         </thead>
                         <tbody className="text-sm font-medium">
@@ -1737,7 +1737,7 @@
                                         <div className="space-y-3">
                                             <div className="flex items-center gap-2 text-red-500">
                                                 <AlertTriangle size={14} />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest">Violações Detectadas</span>
+                                                <span className="text-[10px] font-bold uppercase tracking-widest">Ausência de:</span>
                                             </div>
                                             <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/20 rounded-sm p-3">
                                                 <div className="flex flex-wrap gap-2">
@@ -2118,12 +2118,12 @@
                             </div>
                             <div className="flex flex-col space-y-1">
                                 <span className="font-condensed font-bold text-white uppercase tracking-widest text-sm leading-none">Centro de Formação de Oficiais</span>
-                                <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-mono">Polícia Militar Revolução • Est. 2026</span>
+                                <span className="text-[10px] text-white/40 uppercase tracking-[0.2em] font-mono">Polícia Militar Revolução Contra o Crime • PMRCC</span>
                             </div>
                         </div>
                         
                         <div className="flex items-center gap-6">
-                            <span className="text-[10px] text-white/30 font-mono">© {new Date().getFullYear()} DIREITOS RESERVADOS</span>
+                            <span className="text-[10px] text-white/30 font-mono">© {new Date().getFullYear()} DIREITOS RESERVADOS À SUBCOMPANHIA</span>
                             <span className="text-brand font-bold uppercase tracking-widest text-[10px] hidden md:inline">DESENVOLVIDO POR .BRENDON</span>
                         </div>
                   </div>
@@ -2135,8 +2135,8 @@
              return {
                 card1: {
                     id: 'classes',
-                    title: 'Aulas e Scripts',
-                    desc: 'Acesse os módulos de ensino e scripts atualizados. Nossa metodologia foca na formação de líderes preparados para o alto comando.',
+                    title: 'Scripts',
+                    desc: 'Clique aqui para acessar os scripts.',
                     iconImg: 'https://i.imgur.com/N03iLnL.png',
                     iconLucide: null,
                     color: 'bg-brand',
@@ -2146,7 +2146,7 @@
                 card2: {
                     id: 'manual_prof',
                     title: 'Manual do Professor',
-                    desc: 'Diretrizes operacionais, regras de conduta e normas de aplicação.',
+                    desc: 'Normas e prazos de aplicação.',
                     iconImg: 'https://i.imgur.com/85pC8ek.png',
                     iconLucide: null,
                     color: 'bg-slate-400',
@@ -2162,7 +2162,7 @@
 
         return (
           <div className="flex flex-col min-h-screen w-full font-sans text-slate-800 dark:text-slate-200">
-            {showWarning && <Toast message="Pulo de linhas detectado! Mantenha a ordem do script." onClose={() => setShowWarning(false)} />}
+            {showWarning && <Toast message="Pulo de linhas detectado!" onClose={() => setShowWarning(false)} />}
             
             <ToastContainer toasts={toasts} removeToast={removeToast} />
 
