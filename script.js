@@ -1069,8 +1069,8 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
                 );
             case 'minfo':
                 return (
-                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-blue-500 rounded-r-sm p-5 flex gap-4 shadow-sm">
-                        <div className="shrink-0 pt-1 text-blue-500"><Info size={20} /></div>
+                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-blue-50/50 dark:bg-blue-900/10 border-l-4 border-blue-500 rounded-r-sm p-5 flex gap-4 shadow-sm items-start">
+                        <div className="shrink-0 mt-1 text-blue-500"><Info size={20} /></div>
                         <div>
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-blue-600 dark:text-blue-400 mb-1 font-condensed">Nota Didática</h4>
                             <div className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins`}>
@@ -1081,8 +1081,8 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
                 );
             case 'malert':
                 return (
-                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-sm p-5 flex gap-4 shadow-sm">
-                        <div className="shrink-0 pt-1 text-red-500"><AlertTriangle size={20} /></div>
+                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-sm p-5 flex gap-4 shadow-sm items-start">
+                        <div className="shrink-0 mt-1 text-red-500"><AlertTriangle size={20} /></div>
                         <div>
                             <h4 className="text-[10px] font-bold uppercase tracking-widest text-red-600 dark:text-red-400 mb-1 font-condensed">Ponto de Atenção</h4>
                             <div className={`${zoomClass} font-bold text-red-900 dark:text-red-200 leading-relaxed font-poppins`}>
@@ -1093,8 +1093,8 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
                 );
             case 'att1':
                 return (
-                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-sm p-5 flex gap-4 shadow-sm">
-                        <div className="shrink-0 pt-1 text-red-500"><AlertTriangle size={20} /></div>
+                    <div key={block.id} className="ml-0 md:ml-12 my-6 bg-red-50/50 dark:bg-red-900/10 border-l-4 border-red-500 rounded-r-sm p-5 flex gap-4 shadow-sm items-start">
+                        <div className="shrink-0 mt-1 text-red-500"><AlertTriangle size={20} /></div>
                         <div>
                             <div className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins font-medium`}>
                                 <RichText text={processedContent} />
@@ -1113,8 +1113,11 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
                             <div className="bg-slate-50/50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-sm p-6 pt-8">
                                 <div className="flex flex-col gap-3">
                                     {block.items.map((item, idx) => (
-                                        <div key={item.id} className={`${idx > 0 ? 'pt-3 border-t border-dashed border-slate-200 dark:border-white/10' : ''} flex gap-4`}>
-                                            <div className={`${zoomClass} text-slate-600 dark:text-slate-300 font-medium leading-relaxed font-mono italic`}>
+                                        <div key={item.id} className={`${idx > 0 ? 'pt-3 border-t border-dashed border-slate-200 dark:border-white/10' : ''} flex gap-4 items-start`}>
+                                            {block.items.length > 1 && (
+                                                <div className="shrink-0 text-brand font-bold font-mono text-xs mt-1 bg-brand/10 w-5 h-5 flex flex-col items-center justify-center rounded-full leading-none">{idx + 1}</div>
+                                            )}
+                                            <div className={`flex-1 ${zoomClass} text-slate-600 dark:text-slate-300 font-medium leading-relaxed font-mono italic`}>
                                                 <RichText text={processText(item.content)} />
                                             </div>
                                         </div>
@@ -1127,8 +1130,8 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
             case 'mlist':
                 return (
                     <div key={block.id} className="ml-4 md:ml-16 mb-2 flex items-start gap-3 group">
-                        <div className="mt-1.5 shrink-0 text-brand/60 group-hover:text-brand transition-colors"><CheckCircle2 size={14} /></div>
-                        <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-justify`}>
+                        <div className="mt-1 shrink-0 text-brand/60 group-hover:text-brand transition-colors"><CheckCircle2 size={16} /></div>
+                        <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins group-hover:text-slate-900 dark:group-hover:text-white transition-colors text-justify flex-1`}>
                             <RichText text={processedContent} />
                         </p>
                     </div>
@@ -1137,7 +1140,7 @@ const ContentRenderer = ({ blocks, onSkipWarning, currentUser, textZoom = 0 }) =
                 return (
                     <div key={block.id} className="ml-4 md:ml-16 mb-2 flex items-start gap-3 group">
                         <div className="mt-2.5 shrink-0 w-1.5 h-1.5 bg-slate-400 dark:bg-slate-500 rounded-full group-hover:bg-brand transition-colors"></div>
-                        <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins text-justify`}>
+                        <p className={`${zoomClass} text-slate-700 dark:text-slate-300 leading-relaxed font-poppins text-justify flex-1`}>
                             <RichText text={processedContent} />
                         </p>
                     </div>
