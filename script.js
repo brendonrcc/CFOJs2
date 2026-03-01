@@ -1677,15 +1677,24 @@ const ClassHistoryList = ({ currentUser }) => {
                             </thead>
                             <tbody className="text-sm font-medium">
                                 {ranking.data.length > 0 ? (
-                                    ranking.data.map((row, idx) => (
-                                        <tr key={idx} className="group hover:bg-slate-50 dark:hover:bg-dark-hover transition-colors border-b border-slate-100 dark:border-white/5 last:border-0">
-                                            {row.map((cell, cIdx) => (
-                                                <td key={cIdx} className="px-6 py-4 text-slate-600 dark:text-slate-300 font-medium">
-                                                    {cell}
-                                                </td>
-                                            ))}
-                                        </tr>
-                                    ))
+                                    ranking.data.map((row, idx) => {
+                                        const isCurrentUserRow = currentUser && row.some(cell => typeof cell === 'string' && cell.toLowerCase() === currentUser.nickname.toLowerCase());
+                                        return (
+                                            <tr key={idx} className={`group transition-colors border-b border-slate-100 dark:border-white/5 last:border-0 ${isCurrentUserRow ? 'bg-green-500/10 dark:bg-green-500/20 hover:bg-green-500/20 dark:hover:bg-green-500/30' : 'hover:bg-slate-50 dark:hover:bg-dark-hover'}`}>
+                                                {row.map((cell, cIdx) => {
+                                                    const isNameCell = typeof cell === 'string' && currentUser && cell.toLowerCase() === currentUser.nickname.toLowerCase();
+                                                    return (
+                                                        <td key={cIdx} className={`px-6 py-4 font-medium ${isCurrentUserRow ? 'text-green-800 dark:text-green-300' : 'text-slate-600 dark:text-slate-300'}`}>
+                                                            <div className="flex items-center gap-2">
+                                                                {cell}
+                                                                {isNameCell && <span className="text-[10px] font-bold uppercase tracking-widest text-green-700 dark:text-green-300 bg-green-500/20 px-2 py-0.5 rounded-sm select-none">(eu)</span>}
+                                                            </div>
+                                                        </td>
+                                                    )
+                                                })}
+                                            </tr>
+                                        )
+                                    })
                                 ) : (
                                     <tr>
                                         <td colSpan={7} className="px-6 py-20 text-center text-slate-400 uppercase font-condensed tracking-widest">Nenhum dado de ranking disponível.</td>
@@ -2615,7 +2624,7 @@ const App = () => {
                                 <div className="max-w-[1400px] mx-auto flex flex-row items-center justify-between gap-2 md:gap-4">
                                     <div className="flex items-center gap-2 md:gap-5 min-w-0">
                                         <button onClick={() => setSelectedClass(null)} className="shrink-0 group flex items-center justify-center w-8 h-8 md:w-12 md:h-12 bg-white dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-sm hover:bg-brand hover:border-brand hover:text-white transition-all duration-200 shadow-sm">
-                                            <ArrowLeft className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-0.5 transition-transform" />
+                                            <ArrowLeft size={20} className="w-4 h-4 md:w-5 md:h-5 group-hover:-translate-x-0.5 transition-transform" />
                                         </button>
                                         <img src={selectedClass.icon} alt="" className="hidden sm:block w-8 h-8 md:w-12 md:h-12 object-contain drop-shadow-md shrink-0" />
                                         <div className="flex flex-col min-w-0">
@@ -2654,9 +2663,9 @@ const App = () => {
                                         </div>
                                         <button onClick={handlePostReport} className="h-8 md:h-12 px-3 md:px-8 bg-brand hover:bg-brand-hover text-white font-condensed font-bold uppercase tracking-widest text-[10px] md:text-xs transition-all shadow-lg hover:shadow-brand/25 hover:-translate-y-0.5 flex items-center justify-center gap-1.5 md:gap-3 border border-white/10 rounded-sm group relative overflow-hidden">
                                             <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent translate-x-[-100%] group-hover:animate-[shimmer_1s_infinite]"></div>
-                                            <FileSignature className="w-3 h-3 md:w-[18px] md:h-[18px]" />
-                                            <span className="hidden sm:inline">Postar</span>
-                                            <span className="sm:hidden">Postar</span>
+                                            <FileSignature size={18} className="w-3 h-3 md:w-[18px] md:h-[18px]" />
+                                            <span className="hidden sm:inline leading-none">Postar</span>
+                                            <span className="sm:hidden leading-none">Postar</span>
                                         </button>
                                     </div>
                                 </div>
