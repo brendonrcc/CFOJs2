@@ -2745,30 +2745,45 @@ const App = () => {
                     )}
 
                     {currentView === 'manual_prof' && (
-                        <div id="manual" className="animate-fade-in max-w-4xl mx-auto">
-                            <div className="mb-10 border-b border-brand/20 pb-6">
-                                <div className="flex items-center gap-4 mb-2">
-                                    <div className="p-3 bg-brand/10 rounded-sm text-brand">
-                                        <CustomProfessorIcon size={32} />
+                        <div id="manual" className="animate-fade-in max-w-5xl mx-auto pb-10">
+                            <div className="relative bg-[#0c120e] dark:bg-black rounded-t-xl overflow-hidden shadow-2xl border-b-4 border-brand">
+                                <div className="absolute inset-0 bg-gradient-to-r from-brand/90 to-[#122409]/90 opacity-90 z-0 border-t border-brand"></div>
+                                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 z-0"></div>
+                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 z-0"></div>
+
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none transform -rotate-12 scale-[3] z-0 origin-right">
+                                    <CustomProfessorIcon size={200} />
+                                </div>
+
+                                <div className="relative z-10 p-10 md:p-14 flex flex-col md:flex-row items-center md:items-start gap-8">
+                                    <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl shadow-inner border border-white/20 shrink-0 group-hover:scale-105 transition-transform duration-500 relative">
+                                        <div className="absolute inset-0 bg-gradient-to-tr from-brand-accent/20 to-transparent opacity-50 rounded-2xl"></div>
+                                        <CustomProfessorIcon size={64} className="drop-shadow-lg relative z-10" />
                                     </div>
-                                    <div>
-                                        <h2 className="text-3xl font-condensed font-bold text-slate-900 dark:text-white uppercase italic tracking-tight">
+                                    <div className="text-center md:text-left flex-1 pt-2">
+                                        <div className="inline-block px-3 py-1 bg-white/10 border border-white/20 text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 backdrop-blur-sm shadow-sm">
+                                            Documentação Oficial
+                                        </div>
+                                        <h2 className="text-4xl md:text-6xl font-condensed font-bold text-white uppercase tracking-tight drop-shadow-md mb-3 leading-none italic">
                                             Manual do Professor
                                         </h2>
-                                        <p className="text-slate-500 font-medium text-sm">Normas, procedimentos e diretrizes oficiais.</p>
+                                        <p className="text-white/80 font-medium text-sm md:text-base max-w-3xl leading-relaxed mix-blend-screen px-4 md:px-0">
+                                            Repositório central de normas, procedimentos operacionais e diretrizes atualizadas para a condução de instruções de excelência no CFO.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
 
                             {contentLoading ? (
-                                <div className="flex flex-col items-center justify-center py-32 bg-white dark:bg-dark-element border border-slate-200 dark:border-slate-700 shadow-sm rounded-sm">
-                                    <Loader2 className="animate-spin text-brand mb-4" size={48} />
-                                    <span className="font-condensed font-bold uppercase tracking-widest text-slate-400 text-sm">Carregando Manual...</span>
+                                <div className="flex flex-col items-center justify-center py-40 bg-white dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/5 shadow-2xl rounded-b-xl border-t-0 relative z-10">
+                                    <Loader2 className="animate-spin text-brand mb-6" size={56} />
+                                    <span className="font-condensed font-bold uppercase tracking-widest text-slate-400 text-sm animate-pulse">Descriptografando Base Científica...</span>
                                 </div>
                             ) : (
-                                <div className="bg-white dark:bg-dark-surface p-8 md:p-12 shadow-folder rounded-sm border border-slate-200 dark:border-white/5 relative">
-                                    <div className="watermark"><img src={LOGO_URL} className="w-full h-auto grayscale opacity-5" /></div>
-                                    <div className="relative z-10">
+                                <div className="bg-white dark:bg-[#0c120e] p-8 md:p-16 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(46,92,24,0.02)] rounded-b-xl border border-slate-200 dark:border-white/5 border-t-0 relative overflow-hidden backdrop-blur-sm z-10">
+                                    <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent"></div>
+                                    <div className="watermark pointer-events-none select-none mix-blend-overlay"><img src={LOGO_URL} className="w-full h-auto grayscale opacity-[0.02] scale-150 transform -translate-y-1/4" /></div>
+                                    <div className="relative z-10 max-w-[900px] mx-auto">
                                         <ContentRenderer blocks={manualContent} onSkipWarning={() => { }} currentUser={currentUser} textZoom={textZoom} />
                                     </div>
                                 </div>
