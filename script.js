@@ -610,7 +610,7 @@ const Slideshow = () => {
 
             <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20 flex gap-2">
                 {slidesData.map((_, i) => (
-                    <button key={i} onClick={() => setCurrent(i)} className={`h-1.5 transition-all duration-300 rounded-full ${i === current ? 'w-8 bg-brand' : 'w-2 bg-white/20 hover:bg-white/40'}`} />
+                    <button key={i} onClick={() => setCurrent(i)} className={`h-1.5 transition-all duration-300 rounded-full ${i === current ? 'w-8 bg-brand' : 'w-2 bg-white/20 hover:bg-white/40'}`} ></button>
                 ))}
             </div>
 
@@ -2745,52 +2745,85 @@ const App = () => {
                     )}
 
                     {currentView === 'manual_prof' && (
-                        <div id="manual" className="animate-fade-in max-w-5xl mx-auto pb-10">
-                            <div className="relative bg-[#0c120e] dark:bg-black rounded-t-xl overflow-hidden shadow-2xl border-b-4 border-brand">
-                                <div className="absolute inset-0 bg-gradient-to-r from-brand/90 to-[#122409]/90 opacity-90 z-0 border-t border-brand"></div>
-                                <div className="absolute top-0 right-0 w-96 h-96 bg-brand-accent/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 z-0"></div>
-                                <div className="absolute bottom-0 left-0 w-64 h-64 bg-white/10 rounded-full blur-2xl translate-y-1/2 -translate-x-1/4 z-0"></div>
+                        <div id="manual" className="animate-fade-in max-w-6xl mx-auto pb-16 pt-6">
+                            {/* Premium Header Container */}
+                            <div className="relative bg-[#050806] rounded-t-3xl overflow-hidden shadow-[0_20px_80px_-15px_rgba(46,92,24,0.15)] border border-white/5 border-b-0 mb-0">
+                                {/* Cybernetic/Grid Background elements */}
+                                <div className="absolute inset-0 bg-[linear-gradient(rgba(46,92,24,0.05)_1px,transparent_1px),linear-gradient(90deg,rgba(46,92,24,0.05)_1px,transparent_1px)] bg-[size:30px_30px] opacity-40"></div>
+                                <div className="absolute inset-0 bg-gradient-to-br from-brand/20 via-[#050806]/90 to-[#050806] z-0"></div>
+                                <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-brand/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/4 z-0 pointer-events-none"></div>
+                                <div className="absolute bottom-0 left-0 w-[300px] h-[300px] bg-brand-accent/5 rounded-full blur-[60px] translate-y-1/2 -translate-x-1/4 z-0 pointer-events-none"></div>
 
-                                <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.03] pointer-events-none transform -rotate-12 scale-[3] z-0 origin-right">
-                                    <CustomProfessorIcon size={200} />
+                                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-brand to-transparent opacity-60 z-20"></div>
+
+                                {/* Abstract decorative icon background */}
+                                <div className="absolute right-0 top-1/2 -translate-y-1/2 opacity-[0.02] transform -rotate-12 scale-[4] z-0 origin-right pointer-events-none mix-blend-screen">
+                                    <Book size={200} />
                                 </div>
 
-                                <div className="relative z-10 p-10 md:p-14 flex flex-col md:flex-row items-center md:items-start gap-8">
-                                    <div className="p-5 bg-white/10 backdrop-blur-md rounded-2xl shadow-inner border border-white/20 shrink-0 group-hover:scale-105 transition-transform duration-500 relative">
-                                        <div className="absolute inset-0 bg-gradient-to-tr from-brand-accent/20 to-transparent opacity-50 rounded-2xl"></div>
-                                        <CustomProfessorIcon size={64} className="drop-shadow-lg relative z-10" />
-                                    </div>
-                                    <div className="text-center md:text-left flex-1 pt-2">
-                                        <div className="inline-block px-3 py-1 bg-white/10 border border-white/20 text-white rounded-full text-[10px] font-bold uppercase tracking-widest mb-4 backdrop-blur-sm shadow-sm">
-                                            Documentação Oficial
+                                <div className="relative z-10 px-8 py-14 md:p-20 flex flex-col md:flex-row items-center md:items-start gap-12">
+                                    {/* Glassmorphic Icon Box */}
+                                    <div className="relative group shrink-0">
+                                        <div className="absolute inset-0 bg-brand blur-2xl opacity-20 group-hover:opacity-40 transition-opacity duration-700 rounded-full"></div>
+                                        <div className="relative w-32 h-32 md:w-40 md:h-40 bg-black/40 backdrop-blur-xl rounded-3xl border border-white/10 flex items-center justify-center shadow-2xl overflow-hidden group-hover:border-brand/40 transition-colors duration-500">
+                                            <div className="absolute inset-0 bg-gradient-to-tr from-brand/20 to-transparent opacity-50"></div>
+                                            <div className="relative z-10 p-2 mix-blend-screen opacity-90 group-hover:opacity-100 group-hover:scale-110 transition-all duration-700 ease-in-out">
+                                                <CustomProfessorIcon size={80} className="drop-shadow-2xl" />
+                                            </div>
+                                            {/* Scanning line effect inside icon box */}
+                                            <div className="absolute top-0 left-0 w-full h-1 bg-brand/60 shadow-[0_0_15px_#2e5c18] animate-scan pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                         </div>
-                                        <h2 className="text-4xl md:text-6xl font-condensed font-bold text-white uppercase tracking-tight drop-shadow-md mb-3 leading-none italic">
+                                    </div>
+
+                                    <div className="text-center md:text-left flex-1 flex flex-col justify-center pt-2 md:pt-4">
+                                        <div className="flex items-center justify-center md:justify-start gap-4 mb-5">
+                                            <div className="flex items-center gap-2 px-4 py-1.5 bg-brand-light/10 border border-brand/30 text-brand-light rounded-sm text-[10px] font-bold uppercase tracking-widest backdrop-blur-sm shadow-[0_0_20px_rgba(46,92,24,0.15)] select-none">
+                                                <ShieldCheck size={14} className="text-brand" /> Oficialato CFO
+                                            </div>
+                                            <div className="h-4 w-px bg-white/20"></div>
+                                            <span className="text-[10px] text-white/30 uppercase tracking-[0.2em] font-mono select-none">v2.0</span>
+                                        </div>
+
+                                        <h2 className="text-4xl md:text-6xl font-display text-white tracking-wide drop-shadow-lg mb-4 leading-none uppercase relative inline-block">
                                             Manual do Professor
                                         </h2>
-                                        <p className="text-white/80 font-medium text-sm md:text-base max-w-3xl leading-relaxed mix-blend-screen px-4 md:px-0">
-                                            Repositório central de normas, procedimentos operacionais e diretrizes atualizadas para a condução de instruções de excelência no CFO.
+
+                                        <p className="text-slate-300 font-poppins text-sm md:text-md max-w-3xl leading-relaxed mx-auto md:mx-0">
+                                            Repositório central de <strong className="text-white font-medium bg-brand/10 px-1">normas operacionais</strong> e diretrizes militares para a instrução avançada.
                                         </p>
                                     </div>
                                 </div>
                             </div>
 
+                            {/* Content Body */}
                             {contentLoading ? (
-                                <div className="flex flex-col items-center justify-center py-40 bg-white dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/5 shadow-2xl rounded-b-xl border-t-0 relative z-10">
-                                    <Loader2 className="animate-spin text-brand mb-6" size={56} />
-                                    <span className="font-condensed font-bold uppercase tracking-widest text-slate-400 text-sm animate-pulse">Descriptografando Base Científica...</span>
+                                <div className="flex flex-col items-center justify-center py-40 bg-white dark:bg-[#080c09] border border-slate-200 dark:border-white/10 shadow-2xl rounded-b-3xl relative z-10 transition-colors">
+                                    <div className="relative">
+                                        <div className="absolute inset-0 border-2 border-brand/20 rounded-full animate-ping opacity-50"></div>
+                                        <Loader2 className="animate-spin text-brand relative z-10" size={56} />
+                                    </div>
+                                    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-slate-400 mt-8 animate-pulse bg-slate-100 dark:bg-white/5 px-4 py-2 rounded-sm border border-slate-200 dark:border-white/10">Sincronizando Base de Dados...</span>
                                 </div>
                             ) : (
-                                <div className="bg-white dark:bg-[#0c120e] p-8 md:p-16 shadow-[0_20px_50px_rgba(0,0,0,0.05)] dark:shadow-[0_20px_50px_rgba(46,92,24,0.02)] rounded-b-xl border border-slate-200 dark:border-white/5 border-t-0 relative overflow-hidden backdrop-blur-sm z-10">
-                                    <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand/30 to-transparent"></div>
-                                    <div className="watermark pointer-events-none select-none mix-blend-overlay"><img src={LOGO_URL} className="w-full h-auto grayscale opacity-[0.02] scale-150 transform -translate-y-1/4" /></div>
-                                    <div className="relative z-10 max-w-[900px] mx-auto">
+                                <div className="bg-white dark:bg-[#0a0e0b] px-6 py-10 md:p-20 shadow-[0_15px_60px_-15px_rgba(0,0,0,0.1)] dark:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.5)] rounded-b-3xl border border-slate-200 dark:border-white/5 border-t-0 relative overflow-hidden backdrop-blur-xl z-10 min-h-[600px] transition-colors">
+
+                                    {/* Subtle line decorations for premium feel */}
+                                    <div className="absolute top-0 left-12 w-1 h-32 bg-gradient-to-b from-brand/50 to-transparent rounded-b-full"></div>
+                                    <div className="absolute top-0 right-12 w-px h-64 bg-gradient-to-b from-white/10 to-transparent"></div>
+                                    <div className="absolute bottom-0 left-0 w-full h-px bg-gradient-to-r from-transparent via-brand/20 to-transparent"></div>
+
+                                    {/* Elegant deeper watermark */}
+                                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none select-none mix-blend-overlay z-0">
+                                        <img src={LOGO_URL} className="w-[800px] h-auto grayscale opacity-[0.015]" />
+                                    </div>
+
+                                    <div className="relative z-10 max-w-[1000px] mx-auto pb-12">
                                         <ContentRenderer blocks={manualContent} onSkipWarning={() => { }} currentUser={currentUser} textZoom={textZoom} />
                                     </div>
                                 </div>
                             )}
                         </div>
                     )}
-
                 </main>
             </div>
 
