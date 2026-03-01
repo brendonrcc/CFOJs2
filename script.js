@@ -2206,13 +2206,16 @@ const AuthScreen = ({ status }) => {
 };
 
 const App = () => {
-    const [isLoggedIn, setIsLoggedIn] = useState(false);
-    const [currentUser, setCurrentUser] = useState(null);
+    const [isLoggedIn, setIsLoggedIn] = useState(() => !!localStorage.getItem('cfo_user'));
+    const [currentUser, setCurrentUser] = useState(() => {
+        const stored = localStorage.getItem('cfo_user');
+        return stored ? JSON.parse(stored) : null;
+    });
     const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'light');
-    const [authStatus, setAuthStatus] = useState('identifying'); // identifying, verifying, success, denied_nologin, denied_permission
+    const [authStatus, setAuthStatus] = useState(() => localStorage.getItem('cfo_user') ? 'success' : 'identifying');
 
     // Security Ref: Stores the user object in a closure that is harder to modify via DevTools than React State
-    const secureUserRef = useRef(null);
+    const secureUserRef = useRef(currentUser);
 
     // ... (Other states)
     const [currentView, setCurrentView] = useState('home');
@@ -2248,35 +2251,52 @@ const App = () => {
     // AUTOMATIC AUTHENTICATION EFFECT
     useEffect(() => {
         const authenticate = async () => {
-            setAuthStatus('identifying');
+            const hasCachedUser = !!localStorage.getItem('cfo_user');
 
-            // Add a small artificial delay for the "scan" effect to be visible
-            await new Promise(resolve => setTimeout(resolve, 1500));
+            if (!hasCachedUser) {
+                setAuthStatus('identifying');
+                // Add a small artificial delay for the "scan" effect to be visible
+                await new Promise(resolve => setTimeout(resolve, 1500));
+            }
 
             const forumNick = await getForumUsername();
 
             if (!forumNick) {
+                localStorage.removeItem('cfo_user');
+                setIsLoggedIn(false);
+                setCurrentUser(null);
                 setAuthStatus('denied_nologin');
                 return;
             }
 
-            setAuthStatus('verifying');
+            if (!hasCachedUser) setAuthStatus('verifying');
             try {
                 const user = await loginUser(forumNick);
 
                 if (user) {
-                    setAuthStatus('success');
-                    setTimeout(() => {
-                        // Store user in Ref for security validation
-                        secureUserRef.current = user;
-                        setCurrentUser(user);
+                    localStorage.setItem('cfo_user', JSON.stringify(user));
+                    secureUserRef.current = user;
+                    setCurrentUser(user);
+
+                    if (!hasCachedUser) {
+                        setAuthStatus('success');
+                        setTimeout(() => {
+                            setIsLoggedIn(true);
+                        }, 1000); // Transition delay
+                    } else {
                         setIsLoggedIn(true);
-                    }, 1000); // Transition delay
+                    }
                 } else {
+                    localStorage.removeItem('cfo_user');
+                    setIsLoggedIn(false);
+                    setCurrentUser(null);
                     setAuthStatus('denied_permission');
                 }
             } catch (e) {
                 console.error(e);
+                localStorage.removeItem('cfo_user');
+                setIsLoggedIn(false);
+                setCurrentUser(null);
                 setAuthStatus('denied_permission');
             }
         };
@@ -2292,6 +2312,7 @@ const App = () => {
             // 1. Verify if React State has been tampered with compared to internal Ref
             if (currentUser !== secureUserRef.current) {
                 console.warn("Security Alert: State modification detected.");
+                localStorage.removeItem('cfo_user');
                 setIsLoggedIn(false);
                 setCurrentUser(null);
                 window.location.reload();
@@ -2301,6 +2322,7 @@ const App = () => {
             // 2. Verify against Forum Session
             const actualNick = await getForumUsername();
             if (!actualNick || (secureUserRef.current && actualNick !== secureUserRef.current.nickname)) {
+                localStorage.removeItem('cfo_user');
                 setIsLoggedIn(false);
                 setCurrentUser(null);
                 setAuthStatus('denied_permission');
