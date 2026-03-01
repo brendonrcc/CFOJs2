@@ -547,8 +547,8 @@ const RichText = ({ text, className }) => {
 
 // --- COMPONENTS --- (BrandHeader, Slideshow, NoticeBoard, Navbar unchanged)
 const BrandHeader = () => (
-    <div className="flex items-center gap-4 select-none">
-        <div className="relative"><img src={LOGO_URL} alt="CFO" className="h-12 w-auto drop-shadow-lg" /></div>
+    <div className="flex items-center gap-3 lg:gap-4 select-none">
+        <div className="relative"><img src={LOGO_URL} alt="CFO" className="h-9 lg:h-12 w-auto drop-shadow-lg" /></div>
         <div className="hidden md:flex flex-col leading-none">
             <div className="flex items-baseline gap-1.5">
                 <span className="text-2xl font-condensed font-bold text-slate-900 dark:text-white italic tracking-tighter">CENTRO</span>
@@ -669,9 +669,9 @@ const Navbar = ({ user, onMenuClick, currentView, navigateTo, menuItems, theme, 
     }, []);
 
     return (
-        <header className="h-24 bg-white dark:bg-dark-surface shadow-lg sticky top-0 z-[900] px-4 lg:px-8 flex items-center justify-between transition-colors duration-300 border-b-4 border-brand">
-            <div className="flex items-center gap-4 lg:gap-8">
-                <button onClick={onMenuClick} className="lg:hidden p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-hover rounded transition-colors"><Menu size={28} /></button>
+        <header className="h-16 lg:h-24 bg-white dark:bg-dark-surface shadow-lg sticky top-0 z-[900] px-3 lg:px-8 flex items-center justify-between transition-colors duration-300 border-b-4 border-brand">
+            <div className="flex items-center gap-3 lg:gap-8">
+                <button onClick={onMenuClick} className="lg:hidden p-1.5 text-slate-500 hover:bg-slate-100 dark:hover:bg-dark-hover rounded transition-colors"><Menu size={24} /></button>
                 <BrandHeader />
                 {user && (
                     <nav className="hidden lg:flex items-center gap-2 ml-8" ref={dropdownRef}>
@@ -2063,16 +2063,16 @@ const MobileMenu = ({ menuItems, currentUser, currentView, navigateTo, onClose }
     return (
         <div className="fixed inset-0 z-[1000] lg:hidden">
             <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose}></div>
-            <div className="absolute left-0 top-0 bottom-0 w-80 bg-white dark:bg-dark-surface flex flex-col animate-fade-in shadow-2xl border-r-4 border-brand">
-                <div className="h-24 flex items-center justify-between px-6 shrink-0 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-dark-element">
+            <div className="absolute left-0 top-0 bottom-0 w-72 bg-white dark:bg-dark-surface flex flex-col animate-fade-in shadow-2xl border-r-4 border-brand">
+                <div className="h-20 flex items-center justify-between px-5 shrink-0 border-b border-slate-100 dark:border-white/5 bg-slate-50 dark:bg-dark-element">
                     <div className="flex items-center gap-3">
-                        <img src={LOGO_URL} alt="Logo" className="h-10 w-auto object-contain" />
+                        <img src={LOGO_URL} alt="Logo" className="h-8 w-auto object-contain" />
                         <div className="flex flex-col leading-none">
                             <span className="font-condensed font-bold uppercase text-brand text-lg tracking-tighter">Menu</span>
                             <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Navegação</span>
                         </div>
                     </div>
-                    <button onClick={onClose} className="p-2 bg-white dark:bg-dark-surface border border-slate-200 dark:border-white/10 rounded-sm">
+                    <button onClick={onClose} className="p-1.5 bg-white dark:bg-dark-surface border border-slate-200 dark:border-white/10 rounded-sm">
                         <X size={20} className="text-slate-500" />
                     </button>
                 </div>
@@ -2539,8 +2539,8 @@ const App = () => {
                 />
             )}
 
-            <div className="flex-1 w-full max-w-[1400px] mx-auto p-4 md:p-8 relative z-10">
-                <main className="paper-container min-h-[800px] p-6 md:p-12 transition-colors duration-500 rounded-b-sm">
+            <div className="flex-1 w-full max-w-[1400px] mx-auto p-2 lg:p-8 relative z-10">
+                <main className="paper-container min-h-[800px] p-4 lg:p-12 transition-colors duration-500 rounded-b-sm">
 
                     {currentView === 'home' && (
                         <div className="animate-fade-in space-y-12">
