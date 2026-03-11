@@ -1278,12 +1278,12 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                         }
 
                         // Lógica para Coluna G (Envio da Atividade)
-                        const activitySent = isAdminActivity ? scoreVal : "-";
+                        const activitySent = isAdminActivity ? scoreVal : " ";
                         const finalScore = isAdminActivity ? "" : scoreVal;
 
                         return {
                             "Carimbo de data/hora": now.toLocaleString('pt-BR'),
-                            "Início": startTime.toLocaleString('pt-BR'),
+                            "Início": isAdminActivity ? "-" : startTime.toLocaleString('pt-BR'),
                             "Aula aplicada": selectedType.name,
                             "Tipo": isAdminActivity ? "Atividade" : "Aula",
                             "Professor(a)": professor.nickname,
@@ -1414,7 +1414,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
                                     {/* Admin specific toggle */}
                                     {selectedType.id === 'admin' && (
-                                        <div className="mt-2 p-3 bg-brand/5 border border-brand/10 rounded-sm flex items-center gap-4">
+                                        <div className="mt-2 p-3 bg-brand/5 border border-brand/10 rounded-sm flex items-center gap-4 animate-fade-in">
                                             <span className="text-[10px] font-bold uppercase tracking-widest text-brand">Tipo:</span>
                                             <label className="flex items-center gap-2 cursor-pointer group">
                                                 <input type="radio" checked={!isAdminActivity} onChange={() => setIsAdminActivity(false)} className="accent-brand cursor-pointer" />
@@ -1428,10 +1428,12 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                                     )}
                                 </div>
 
-                                <div className="space-y-3">
-                                    <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Horário de Início</label>
-                                    <input type="datetime-local" value={formatDateTimeForInput(startTime)} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full h-12 md:h-14 px-4 bg-slate-50 dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand outline-none transition-all uppercase cursor-pointer" />
-                                </div>
+                                {!isAdminActivity && (
+                                    <div className="space-y-3 animate-fade-in">
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Horário de Início</label>
+                                        <input type="datetime-local" value={formatDateTimeForInput(startTime)} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full h-12 md:h-14 px-4 bg-slate-50 dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand outline-none transition-all uppercase cursor-pointer" />
+                                    </div>
+                                )}
                             </div>
 
                             <div className="space-y-3">
@@ -1669,7 +1671,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                                                             <td className="px-6 py-4 text-slate-500 whitespace-nowrap font-mono text-xs">
                                                                 <div className="flex flex-col gap-1.5">
                                                                     <div className="flex items-center gap-2" title="Término"><CalendarDays size={12} className="text-brand" /> {entry.endTime}</div>
-                                                                    {entry.startTime && <div className="flex items-center gap-2 opacity-70" title="Início"><Clock size={12} /> {entry.startTime}</div>}
+                                                                    {entry.startTime && entry.startTime !== "-" && <div className="flex items-center gap-2 opacity-70" title="Início"><Clock size={12} /> {entry.startTime}</div>}
                                                                 </div>
                                                             </td>
                                                             <td className="px-6 py-4 text-slate-800 dark:text-slate-200">
