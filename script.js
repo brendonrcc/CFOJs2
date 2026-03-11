@@ -1,4 +1,4 @@
-     const { useState, useEffect, useMemo, useCallback, useRef } = React;
+const { useState, useEffect, useMemo, useCallback, useRef } = React;
         const { createRoot } = ReactDOM;
 
         const kebabToPascal = (str) =>
@@ -1191,6 +1191,10 @@
             const [individualComments, setIndividualComments] = useState({});
             const [startTime, setStartTime] = useState(new Date());
             const [isSendingSheet, setIsSendingSheet] = useState(false);
+            
+            // Custom Select Dropdown States
+            const [isClassDropdownOpen, setIsClassDropdownOpen] = useState(false);
+            const classDropdownRef = useRef(null);
 
             const studentList = useMemo(() => {
                 if (!students.trim()) return [];
@@ -1236,6 +1240,17 @@
                     });
                 }
             }, [studentList, initialVerdict, initialComments, initialScore, isAdminActivity]);
+
+            // Handle outside click for custom dropdown
+            useEffect(() => {
+                const handleClickOutside = (event) => {
+                    if (classDropdownRef.current && !classDropdownRef.current.contains(event.target)) {
+                        setIsClassDropdownOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
 
             const handlePostAndProcess = async () => {
                 if (studentList.length === 0) return addToast('error', 'Erro', "Adicione alunos antes de enviar.");
@@ -1352,20 +1367,41 @@
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 mb-6">
                                 <div className="space-y-3">
                                     <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Aula/Curso</label>
-                                    <div className="relative">
-                                        <select value={selectedType.id} onChange={(e) => {
-                                            const source = CLASS_TYPES_FEEDBACK;
-                                            const newType = source.find(t => t.id === e.target.value);
-                                            if (newType) {
-                                                setSelectedType(newType);
-                                                setIndividualScores({});
-                                                if (newType.id !== 'admin') setIsAdminActivity(false);
-                                                if (newType.id === 'admin') setIsAdminActivity(false);
-                                            }
-                                        }} className="w-full h-12 md:h-14 pl-4 pr-10 bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/10 rounded-md text-xs md:text-sm font-bold text-slate-700 dark:text-white focus:border-brand focus:ring-1 focus:ring-brand outline-none transition-all appearance-none uppercase cursor-pointer">
-                                            {CLASS_TYPES_FEEDBACK.map(t => (<option key={t.id} value={t.id}>{t.name}</option>))}
-                                        </select>
-                                        <ChevronDown className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" size={16} />
+                                    
+                                    {/* Dropdown Customizado */}
+                                    <div className="relative" ref={classDropdownRef}>
+                                        <div
+                                            onClick={() => setIsClassDropdownOpen(!isClassDropdownOpen)}
+                                            className={`w-full h-12 md:h-14 px-4 bg-white dark:bg-[#0c120e] border ${isClassDropdownOpen ? 'border-brand ring-1 ring-brand/50 shadow-sm' : 'border-slate-200 dark:border-white/10 hover:border-brand/50'} rounded-md text-xs md:text-sm font-bold text-slate-700 dark:text-white flex items-center justify-between cursor-pointer transition-all uppercase`}
+                                        >
+                                            <div className="flex items-center gap-3 truncate">
+                                                <div className="w-6 h-6 rounded bg-brand/10 flex items-center justify-center shrink-0">
+                                                    <Book size={12} className="text-brand" />
+                                                </div>
+                                                <span className="truncate mt-0.5">{selectedType.name}</span>
+                                            </div>
+                                            <ChevronDown className={`shrink-0 text-slate-400 transition-transform duration-300 ${isClassDropdownOpen ? 'rotate-180 text-brand' : ''}`} size={16} />
+                                        </div>
+
+                                        <div className={`absolute top-full left-0 right-0 mt-2 bg-white dark:bg-[#151b17] border border-slate-200 dark:border-white/10 rounded-md shadow-2xl z-50 overflow-hidden transition-all duration-200 origin-top ${isClassDropdownOpen ? 'opacity-100 translate-y-0 pointer-events-auto' : 'opacity-0 -translate-y-2 pointer-events-none'}`}>
+                                            <div className="max-h-60 overflow-y-auto custom-scrollbar flex flex-col p-1.5 gap-1">
+                                                {CLASS_TYPES_FEEDBACK.map(t => (
+                                                    <div
+                                                        key={t.id}
+                                                        onClick={() => {
+                                                            setSelectedType(t);
+                                                            setIndividualScores({});
+                                                            if (t.id !== 'admin') setIsAdminActivity(false);
+                                                            setIsClassDropdownOpen(false);
+                                                        }}
+                                                        className={`px-4 py-3 text-xs md:text-sm font-bold uppercase cursor-pointer rounded-sm transition-all flex items-center justify-between group ${selectedType.id === t.id ? 'bg-brand/10 text-brand' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
+                                                    >
+                                                        <span className={`truncate pr-2 ${selectedType.id === t.id ? '' : 'group-hover:translate-x-1 transition-transform'}`}>{t.name}</span>
+                                                        {selectedType.id === t.id && <Check size={16} className="text-brand shrink-0" />}
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
                                     </div>
 
                                     {/* Admin specific toggle */}
@@ -1718,24 +1754,28 @@
             const [postingForum, setPostingForum] = useState(false);
             const [mpButtonLabel, setMpButtonLabel] = useState('');
 
-            const REQUIRED_TAGS = ['[/b]', '[/i]', '[/u]', '[/strike]', '[/code]', '[/spoiler]', '[/table]', '[/img]', '[/font]', '[url=', '[size=', '[color='];
+            // Removido '[/code]' e atualizado método de checagem.
+            const REQUIRED_TAGS_CONFIG = [
+                { key: 'b', name: 'Negrito', check: t => t.toLowerCase().includes('[/b]') },
+                { key: 'i', name: 'Itálico', check: t => t.toLowerCase().includes('[/i]') },
+                { key: 'u', name: 'Sublinhado', check: t => t.toLowerCase().includes('[/u]') },
+                { key: 'strike', name: 'Riscado', check: t => t.toLowerCase().includes('[/strike]') },
+                { key: 'spoiler', name: 'Spoiler', check: t => t.toLowerCase().includes('[/spoiler]') },
+                { key: 'table', name: 'Tabela', check: t => t.toLowerCase().includes('[/table]') },
+                { key: 'img', name: 'Imagem', check: t => /\[img/i.test(t) }, // Detecta dinamicamente [img], [img=...], [img(25px)] indo além de apenas [/img]
+                { key: 'font', name: 'Fonte', check: t => t.toLowerCase().includes('[/font]') },
+                { key: 'url', name: 'Link/URL', check: t => t.toLowerCase().includes('[url=') },
+                { key: 'size', name: 'Tamanho', check: t => t.toLowerCase().includes('[size=') },
+                { key: 'color', name: 'Cor', check: t => t.toLowerCase().includes('[color=') }
+            ];
 
-            const TAG_NAMES = {
-                '[/b]': 'Negrito',
-                '[/i]': 'Itálico',
-                '[/u]': 'Sublinhado',
-                '[/strike]': 'Riscado',
-                '[/code]': 'Código',
-                '[/spoiler]': 'Spoiler',
-                '[/table]': 'Tabela',
-                '[/img]': 'Imagem',
-                '[/font]': 'Fonte',
-                '[url=': 'Link/URL',
-                '[size=': 'Tamanho',
-                '[color=': 'Cor'
+            const handleCheck = () => { 
+                if (!bbcodeInput.trim()) return; 
+                // Filtra as tags que falharam nos testes do config
+                const missingTags = REQUIRED_TAGS_CONFIG.filter(tag => !tag.check(bbcodeInput)).map(t => t.name);
+                setResult({ approved: missingTags.length === 0, missing: missingTags, checked: true }); 
             };
-
-            const handleCheck = () => { if (!bbcodeInput.trim()) return; const missingTags = REQUIRED_TAGS.filter(tag => !bbcodeInput.includes(tag)); setResult({ approved: missingTags.length === 0, missing: missingTags, checked: true }); };
+            
             const handleClear = () => { setStudentNick(''); setBbcodeInput(''); setResult({ approved: false, missing: [], checked: false }); };
 
             const handleMpSend = async (isApproval) => {
@@ -1767,12 +1807,13 @@
                     if (isApproval) {
                         motives = "Cumpriu os requisitos.";
                     } else {
-                        const missingNames = result.missing.map(tag => TAG_NAMES[tag] || tag);
+                        const missingNames = result.missing;
                         if (missingNames.length === 0) motives = "Erro desconhecido.";
                         else if (missingNames.length === 1) motives = `Faltou o uso de ${missingNames[0]}.`;
                         else {
-                            const last = missingNames.pop();
-                            motives = `Faltou o uso de ${missingNames.join(', ')} e ${last}.`;
+                            const last = missingNames[missingNames.length - 1];
+                            const rest = missingNames.slice(0, -1);
+                            motives = `Faltou o uso de ${rest.join(', ')} e ${last}.`;
                         }
                     }
 
@@ -1834,11 +1875,12 @@
 
                 let reasons = "Sem observações.";
                 if (!approved && result.missing.length > 0) {
-                    const missingNames = result.missing.map(tag => TAG_NAMES[tag] || tag);
+                    const missingNames = result.missing;
                     if (missingNames.length === 1) reasons = `Faltou utilizar: ${missingNames[0]}.`;
                     else {
-                        const last = missingNames.pop();
-                        reasons = `Faltou utilizar: ${missingNames.join(', ')} e ${last}.`;
+                        const last = missingNames[missingNames.length - 1];
+                        const rest = missingNames.slice(0, -1);
+                        reasons = `Faltou utilizar: ${rest.join(', ')} e ${last}.`;
                     }
                 }
 
@@ -1977,10 +2019,10 @@
                                                     </div>
                                                     <div className="bg-red-50 dark:bg-red-900/10 border border-red-100 dark:border-red-500/20 rounded-sm p-3">
                                                         <div className="flex flex-wrap gap-2">
-                                                            {result.missing.map((tag, idx) => (
+                                                            {result.missing.map((tagName, idx) => (
                                                                 <span key={idx} className="px-2 py-1 bg-white dark:bg-black/40 border border-red-200 dark:border-red-500/30 text-red-600 dark:text-red-400 rounded-sm text-[10px] font-mono font-bold flex items-center gap-1">
                                                                     <span className="w-1.5 h-1.5 bg-red-500 rounded-full"></span>
-                                                                    {TAG_NAMES[tag] || tag}
+                                                                    {tagName}
                                                                 </span>
                                                             ))}
                                                         </div>
@@ -2833,4 +2875,3 @@
         const container = document.getElementById('root');
         const root = ReactDOM.createRoot(container);
         root.render(<App />);
-
