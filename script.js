@@ -428,6 +428,15 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
             }
         };
 
+        // --- TIMEZONE HELPER ---
+        // Converte qualquer objeto Date para uma string formatada no horário de Brasília, pronta para os inputs <input type="datetime-local">
+        const getBRTStringForInput = (dateObj = new Date()) => {
+            const brtString = dateObj.toLocaleString("en-US", { timeZone: "America/Sao_Paulo" });
+            const d = new Date(brtString);
+            const pad = (n) => n.toString().padStart(2, '0');
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        };
+
         // --- LOGIC HELPERS ---
         const generateId = () => Math.random().toString(36).substr(2, 9);
         const parseRowsToBlocks = (rows) => {
@@ -1197,7 +1206,7 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
             const [verdicts, setVerdicts] = useState({});
             const [individualScores, setIndividualScores] = useState({});
             const [individualComments, setIndividualComments] = useState({});
-            const [startTime, setStartTime] = useState(new Date());
+            const [startTime, setStartTime] = useState(() => getBRTStringForInput());
             const [isSendingSheet, setIsSendingSheet] = useState(false);
             
             // Custom Select Dropdown States
@@ -1219,7 +1228,10 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                         setIsAdminActivity(true);
                     }
                 }
-                if (initialStartTime) setStartTime(initialStartTime);
+                if (initialStartTime) {
+                    // Convert given object date exactly to BRT string format 
+                    setStartTime(getBRTStringForInput(initialStartTime));
+                }
                 if (initialStudent) setStudents(initialStudent);
             }, [initialClassId, initialStartTime, initialStudent]);
 
@@ -1265,8 +1277,19 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                 setIsSendingSheet(true);
 
                 try {
+                    // Data/Hora da postagem em Brasília
+                    // Remover a vírgula do pt-BR se houver para garantir consistência em qualquer browser (Ex: "13/03/2026 15:00:00")
+                    const postagemBRT = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' }).replace(',', '');
+
+                    // Data/Hora do Início formatada para o formato pt-BR
+                    let inicioFormatted = "-";
+                    if (startTime && startTime.includes('T')) {
+                        const [datePart, timePart] = startTime.split('T');
+                        const [year, month, day] = datePart.split('-');
+                        inicioFormatted = `${day}/${month}/${year} ${timePart}`;
+                    }
+
                     // 1. Send data to Sheet
-                    const now = new Date();
                     const payload = studentList.map(student => {
                         const verdict = verdicts[student] || 'Aprovado';
                         const scoreVal = individualScores[student] || (isAdminActivity ? 'Sim' : '0');
@@ -1282,8 +1305,8 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                         const finalScore = isAdminActivity ? "" : scoreVal;
 
                         return {
-                            "Carimbo de data/hora": now.toLocaleString('pt-BR'),
-                            "Início": isAdminActivity ? "-" : startTime.toLocaleString('pt-BR'),
+                            "Carimbo de data/hora": postagemBRT,
+                            "Início": isAdminActivity ? "-" : inicioFormatted,
                             "Aula aplicada": selectedType.name,
                             "Tipo": isAdminActivity ? "Atividade" : "Aula",
                             "Professor(a)": professor.nickname,
@@ -1334,8 +1357,6 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
                     setIsSendingSheet(false);
                 }
             };
-
-            const formatDateTimeForInput = (date) => { const d = new Date(date); d.setMinutes(d.getMinutes() - d.getTimezoneOffset()); return d.toISOString().slice(0, 16); };
 
             const updateStudentData = (student, field, value) => {
                 if (field === 'verdict') setVerdicts(prev => ({ ...prev, [student]: value }));
@@ -1430,8 +1451,8 @@ const { useState, useEffect, useMemo, useCallback, useRef } = React;
 
                                 {!isAdminActivity && (
                                     <div className="space-y-3 animate-fade-in">
-                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Horário de Início</label>
-                                        <input type="datetime-local" value={formatDateTimeForInput(startTime)} onChange={(e) => setStartTime(new Date(e.target.value))} className="w-full h-12 md:h-14 px-4 bg-slate-50 dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand outline-none transition-all uppercase cursor-pointer" />
+                                        <label className="text-xs font-bold text-slate-500 uppercase tracking-widest block">Horário de Início (Brasília - UTC-3)</label>
+                                        <input type="datetime-local" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="w-full h-12 md:h-14 px-4 bg-slate-50 dark:bg-[#0a0f0b] border border-slate-200 dark:border-white/10 rounded-md text-sm font-bold text-slate-700 dark:text-white focus:border-brand outline-none transition-all uppercase cursor-pointer" />
                                     </div>
                                 )}
                             </div>
